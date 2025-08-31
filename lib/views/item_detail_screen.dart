@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/ItemCategory.dart';
 import '../viewmodels/shift_house_viewmodel.dart';
-import '../models/shift_house_model.dart';/////inside blue main list
 
 const Color darkBlue = Color(0xFF03669d);
 const Color mediumBlue = Color(0xFF37b3e7);
 const Color lightBlue = Color(0xFF7ed2f7);
 const Color whiteColor = Color(0xFFf7f7f7);
+
 
 class ItemDetailScreen extends StatelessWidget {
   final ItemCategory category;
