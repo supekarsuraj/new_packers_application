@@ -1,6 +1,17 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:new_packers_application/views/PackersMoversScreen.dart';
+import 'package:new_packers_application/views/ACServicesScreen.dart';
+import 'package:new_packers_application/views/CleaningServicesScreen.dart';
+import 'package:new_packers_application/views/OtherHomeServiceScreen.dart';
+
+
+
+
+
+
+
 
 const Color darkBlue = Color(0xFF03669d);
 const Color mediumBlue = Color(0xFF37b3e7);
@@ -47,6 +58,8 @@ class _HomeServiceViewState extends State<HomeServiceView> {
     _pageController.dispose();
     super.dispose();
   }
+
+
 
   // WhatsApp chat
   void _openWhatsApp() async {
@@ -191,10 +204,31 @@ class _HomeServiceViewState extends State<HomeServiceView> {
               physics: const NeverScrollableScrollPhysics(),
               childAspectRatio: 2.0,
               children: [
-                _buildButton('Package & Movers', Icons.local_shipping),
-                _buildButton('AC Services', Icons.ac_unit),
-                _buildButton('Cleaning Services', Icons.cleaning_services),
-                _buildButton('Other Home Service', Icons.home_repair_service),
+                _buildButton('Packers & Movers', Icons.local_shipping, onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const PackersMoversScreen()),
+                  );
+                }),
+                _buildButton('AC Services', Icons.ac_unit, onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const ACServicesScreen()),
+                  );
+                }),
+
+                _buildButton('Cleaning Services', Icons.cleaning_services, onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const CleaningServicesScreen()),
+                  );
+                }),
+                _buildButton('Other Home Service', Icons.home_repair_service, onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const OtherHomeServiceScreen()),
+                  );
+                }),
                 _buildButton('Call Us', Icons.call, onTap: _makePhoneCall), // NEW BUTTON
               ],
             ),
