@@ -4,6 +4,8 @@ import '../viewmodels/login_viewmodel.dart';
 import 'signup_view.dart';
 import 'OTPSuccessView.dart';
 import 'signupOtpView.dart';
+import 'HomeServiceView.dart';
+
 
 
 class LoginView extends StatelessWidget {
@@ -81,7 +83,9 @@ class LoginView extends StatelessWidget {
                           context,
                           MaterialPageRoute(
                             builder: (context) =>
-                            const OTPSuccessView(),
+                            // whats app that type messaes
+                         // const OTPSuccessView(),
+                            const HomeServiceView(),
                           ),
                         );
                       }
