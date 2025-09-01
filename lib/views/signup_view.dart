@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'OTPSuccessView.dart';
 import 'login_view.dart';
+import 'HomeServiceView.dart';
+
 
 class SignupView extends StatefulWidget {
   const SignupView({super.key});
@@ -159,7 +161,11 @@ class _SignupViewState extends State<SignupView> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const OTPSuccessView(),
+                          builder: (context) =>
+                          // whats app that type options
+                          //const OTPSuccessView(),
+                          const HomeServiceView(),
+
                         ),
                       );
                     }
