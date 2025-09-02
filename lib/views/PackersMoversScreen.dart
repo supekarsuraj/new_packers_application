@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '/viewmodels/shift_house_viewmodel.dart';
+import '/views/shift_house_screen.dart';
 
 const Color darkBlue = Color(0xFF03669d);
 const Color mediumBlue = Color(0xFF37b3e7);
@@ -33,13 +36,9 @@ class PackersMoversScreen extends StatelessWidget {
         ),
         backgroundColor: darkBlue,
         elevation: 2,
-        leading: Builder(
-          builder: (context) => IconButton(
-            icon: const Icon(Icons.menu, color: whiteColor),
-            onPressed: () {
-              Navigator.pop(context);
-            },
-          ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: whiteColor),
+          onPressed: () => Navigator.pop(context),
         ),
       ),
       body: Padding(
@@ -53,7 +52,16 @@ class PackersMoversScreen extends StatelessWidget {
                 startColor: btn['startColor'],
                 endColor: btn['endColor'],
                 onTap: () {
-                  // Add navigation or action here
+                  // ✅ Navigate to ShiftHouseScreen for all options
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ChangeNotifierProvider(
+                        create: (context) => ShiftHouseViewModel(),
+                        child: const ShiftHouseScreen(),
+                      ),
+                    ),
+                  );
                 },
               ),
             );
@@ -72,8 +80,8 @@ class PackersMoversScreen extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: Container(
-        width: double.infinity, // full screen width
-        height: 50, // compact height
+        width: double.infinity,
+        height: 50,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
           gradient: LinearGradient(

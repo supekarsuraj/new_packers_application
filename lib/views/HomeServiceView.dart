@@ -1,17 +1,12 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:url_launcher/url_launcher.dart';
+
 import 'package:new_packers_application/views/PackersMoversScreen.dart';
 import 'package:new_packers_application/views/ACServicesScreen.dart';
 import 'package:new_packers_application/views/CleaningServicesScreen.dart';
 import 'package:new_packers_application/views/OtherHomeServiceScreen.dart';
-
-
-
-
-
-
-
+import 'package:new_packers_application/views/MyRequestScreen.dart';
 
 const Color darkBlue = Color(0xFF03669d);
 const Color mediumBlue = Color(0xFF37b3e7);
@@ -59,28 +54,29 @@ class _HomeServiceViewState extends State<HomeServiceView> {
     super.dispose();
   }
 
-
+  void _navigateToMyRequest() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const MyRequestScreen()),
+    );
+  }
 
   // WhatsApp chat
   void _openWhatsApp() async {
     final String phoneNumber = '919022062666';
     final String message = 'Hello from Mumbai Metro Packers & Movers app';
 
-    // WhatsApp app URL
     final Uri whatsappAppUri = Uri.parse(
       'whatsapp://send?phone=$phoneNumber&text=${Uri.encodeComponent(message)}',
     );
 
-    // WhatsApp Web fallback URL
     final Uri whatsappWebUri = Uri.parse(
       'https://wa.me/$phoneNumber?text=${Uri.encodeComponent(message)}',
     );
 
     try {
-      // Try launching the app first
       await launchUrl(whatsappAppUri);
     } catch (e) {
-      // If it fails, open WhatsApp Web
       if (await canLaunchUrl(whatsappWebUri)) {
         await launchUrl(whatsappWebUri, mode: LaunchMode.externalApplication);
       } else {
@@ -90,7 +86,6 @@ class _HomeServiceViewState extends State<HomeServiceView> {
       }
     }
   }
-
 
   // Phone call
   void _makePhoneCall() async {
@@ -216,7 +211,6 @@ class _HomeServiceViewState extends State<HomeServiceView> {
                     MaterialPageRoute(builder: (context) => const ACServicesScreen()),
                   );
                 }),
-
                 _buildButton('Cleaning Services', Icons.cleaning_services, onTap: () {
                   Navigator.push(
                     context,
@@ -229,7 +223,11 @@ class _HomeServiceViewState extends State<HomeServiceView> {
                     MaterialPageRoute(builder: (context) => const OtherHomeServiceScreen()),
                   );
                 }),
-                _buildButton('Call Us', Icons.call, onTap: _makePhoneCall), // NEW BUTTON
+
+                // ✅ Added My Request button before Call Us
+                _buildButton('My Request', Icons.check_circle, onTap: _navigateToMyRequest),
+
+                _buildButton('Call Us', Icons.call, onTap: _makePhoneCall),
               ],
             ),
             const Spacer(),
