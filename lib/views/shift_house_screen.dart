@@ -215,6 +215,25 @@ class ShiftHouseScreen extends StatelessWidget {
                         return;
                       }
 
+                      // Validation: Check if at least one item is selected
+                      bool hasSelectedItems = false;
+                      for (var category in viewModel.itemCategories) {
+                        if (viewModel.getTotalItemsInCategory(category.name) > 0) {
+                          hasSelectedItems = true;
+                          break;
+                        }
+                      }
+
+                      if (!hasSelectedItems) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Please select at least one item to move'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                        return;
+                      }
+
                       // Navigate to the next screen (you'll need to replace this with your actual next screen)
                       Navigator.push(
                         context,
