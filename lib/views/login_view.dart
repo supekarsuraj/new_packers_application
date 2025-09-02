@@ -84,8 +84,8 @@ class LoginView extends StatelessWidget {
                           MaterialPageRoute(
                             builder: (context) =>
                             // whats app that type messaes
-                         // const OTPSuccessView(),
-                            const HomeServiceView(),
+                          // const OTPSuccessView(),
+                           const HomeServiceView(),
                           ),
                         );
                       }
