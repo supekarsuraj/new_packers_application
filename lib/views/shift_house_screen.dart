@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../lib/views/location_selection_screen.dart';
 import '../viewmodels/shift_house_viewmodel.dart';
-import 'item_category_screen.dart';
+import 'item_detail_screen.dart';
 
 const Color darkBlue = Color(0xFF03669d);
 const Color mediumBlue = Color(0xFF37b3e7);
@@ -23,8 +24,6 @@ class ShiftHouseScreen extends StatelessWidget {
               style: TextStyle(
                 fontFamily: 'Poppins',
                 fontWeight: FontWeight.bold,
-               // backgroundColor: Colors.white,
-
                 color: whiteColor,
                 fontSize: 20,
               ),
@@ -73,14 +72,14 @@ class ShiftHouseScreen extends StatelessWidget {
                     const SizedBox(width: 16),
                     Expanded(
                       child: DropdownButtonFormField<String>(
-                        isExpanded: true, // ✅ Prevent overflow
+                        isExpanded: true,
                         decoration: InputDecoration(
                           hintText: 'Select time',
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
                             borderSide: const BorderSide(color: Colors.grey),
                           ),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10), // ✅ Adjust padding
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                         ),
                         value: viewModel.shiftHouseData.selectedTime.isEmpty
                             ? null
@@ -88,7 +87,7 @@ class ShiftHouseScreen extends StatelessWidget {
                         items: viewModel.timeSlots.map((String time) {
                           return DropdownMenuItem<String>(
                             value: time,
-                            child: Text(time, overflow: TextOverflow.ellipsis), // ✅ Avoid long text pushing arrow
+                            child: Text(time, overflow: TextOverflow.ellipsis),
                           );
                         }).toList(),
                         onChanged: (String? newValue) {
@@ -98,61 +97,91 @@ class ShiftHouseScreen extends StatelessWidget {
                         },
                       ),
                     ),
-
                   ],
                 ),
                 const SizedBox(height: 24),
                 const Text(
-                  'Type of house',
+                  'Select Items to Move',
                   style: TextStyle(
                     fontSize: 18,
                     color: Colors.grey,
                     fontFamily: 'Poppins',
                   ),
                 ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Residential',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.black,
-                    fontFamily: 'Poppins',
-                  ),
-                ),
                 const SizedBox(height: 16),
                 Expanded(
-                  child: GridView.builder(
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      childAspectRatio: 1,
-                      crossAxisSpacing: 16,
-                      mainAxisSpacing: 16,
-                    ),
-                    itemCount: viewModel.houseTypes.length,
+                  child: ListView.builder(
+                    itemCount: viewModel.itemCategories.length,
                     itemBuilder: (context, index) {
-                      final houseType = viewModel.houseTypes[index];
-                      final isSelected = viewModel.shiftHouseData.houseType == houseType;
+                      final category = viewModel.itemCategories[index];
+                      final totalCount = viewModel.getTotalItemsInCategory(category.name);
 
-                      return GestureDetector(
-                        onTap: () => viewModel.updateHouseType(houseType),
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 12.0),
                         child: Container(
                           decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: isSelected ? mediumBlue : Colors.grey,
-                              width: isSelected ? 3 : 2,
-                            ),
-                            color: isSelected ? mediumBlue.withOpacity(0.1) : Colors.white,
+                            shape: BoxShape.rectangle,
+                            borderRadius: BorderRadius.circular(25),
+                            color: mediumBlue,
                           ),
-                          child: Center(
-                            child: Text(
-                              houseType,
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: isSelected ? mediumBlue : Colors.black,
-                                fontFamily: 'Poppins',
+                          child: ElevatedButton(
+                            onPressed: () {
+                              if (category.items.isNotEmpty) {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => ChangeNotifierProvider.value(
+                                      value: viewModel,
+                                      child: ItemDetailScreen(category: category),
+                                    ),
+                                  ),
+                                );
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: mediumBlue,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(25),
                               ),
+                            ),
+                            child: Stack(
+                              children: [
+                                Center(
+                                  child: Text(
+                                    '${category.icon} ${category.name} ${category.icon}',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                                if (totalCount > 0)
+                                  Positioned(
+                                    right: 16,
+                                    top: 0,
+                                    bottom: 0,
+                                    child: Container(
+                                      width: 30,
+                                      height: 30,
+                                      decoration: const BoxDecoration(
+                                        color: Colors.red,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          totalCount.toString(),
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                              ],
                             ),
                           ),
                         ),
@@ -165,19 +194,40 @@ class ShiftHouseScreen extends StatelessWidget {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () {
+                      // Validation: Check if date and time are selected
+                      if (viewModel.shiftHouseData.selectedDate.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Please select a date'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                        return;
+                      }
+
+                      if (viewModel.shiftHouseData.selectedTime.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Please select a time'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                        return;
+                      }
+
+                      // Navigate to the next screen (you'll need to replace this with your actual next screen)
                       Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) => ChangeNotifierProvider.value(
                             value: viewModel,
-                            child: const ItemCategoryScreen(),
+                            child: const LocationSelectionScreen(), // Replace with your actual next screen
                           ),
                         ),
                       );
                     },
                     style: ElevatedButton.styleFrom(
-                    //  backgroundColor: Colors.red,
-                        backgroundColor: darkBlue,
+                      backgroundColor: darkBlue,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
