@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import '../viewmodels/login_viewmodel.dart';
 import 'signup_view.dart';
 import 'OTPSuccessView.dart';
 import 'signupOtpView.dart';
 import 'HomeServiceView.dart';
-
-
+import 'OTPScreen.dart'; // Import the new OTP screen
+import 'package:flutter/services.dart';
 
 class LoginView extends StatelessWidget {
   const LoginView({super.key});
@@ -15,6 +17,26 @@ class LoginView extends StatelessWidget {
   static const Color mediumBlue = Color(0xFF37b3e7);
   static const Color lightBlue = Color(0xFF7ed2f7);
   static const Color whiteColor = Color(0xFFf7f7f7);
+
+  // Function to send OTP
+  Future<bool> sendOTP(String mobileNumber) async {
+    try {
+      final response = await http.post(
+        Uri.parse('http://54kidsstreet.org/api/customers/$mobileNumber/otp'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return true;
+      } else {
+        print('Failed to send OTP: ${response.statusCode}');
+        return false;
+      }
+    } catch (e) {
+      print('Error sending OTP: $e');
+      return false;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -51,7 +73,7 @@ class LoginView extends StatelessWidget {
                           children: const [
                             Text(
                               '🇮🇳',
-                              style: TextStyle(fontSize: 20), // Adjust flag size
+                              style: TextStyle(fontSize: 20),
                             ),
                             SizedBox(width: 6),
                             Text(
@@ -70,22 +92,41 @@ class LoginView extends StatelessWidget {
                     onChanged: (value) {
                       viewModel.setMobileNumber(value);
                     },
-                  )
-                  ,
+                  ),
                   const SizedBox(height: 20),
                   ElevatedButton(
                     onPressed: viewModel.isLoading
                         ? null
-                        : () {
-                      viewModel.requestOTP();
+                        : () async {
                       if (viewModel.mobileNumber.length == 10) {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                            // whats app that type messaes
-                          // const OTPSuccessView(),
-                           const HomeServiceView(),
+                        viewModel.setLoading(true);
+
+                        bool otpSent = await sendOTP(viewModel.mobileNumber);
+
+                        viewModel.setLoading(false);
+
+                        if (otpSent) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => OTPScreen(
+                                mobileNumber: viewModel.mobileNumber,
+                              ),
+                            ),
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Failed to send OTP. Please try again.'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Please enter a valid 10-digit mobile number'),
+                            backgroundColor: Colors.red,
                           ),
                         );
                       }
