@@ -19,7 +19,7 @@ class LoginViewModel with ChangeNotifier {
     notifyListeners();
   }
 
-  // Add this method to make it compatible with the updated LoginView
+  // Method to manually set loading state (used by LoginView)
   void setLoading(bool loading) {
     _isLoading = loading;
     notifyListeners();
@@ -62,6 +62,12 @@ class LoginViewModel with ChangeNotifier {
 
   void clearErrorMessage() {
     _errorMessage = '';
+    notifyListeners();
+  }
+
+  void clearMobileNumber() {
+    _mobileNumber = '';
+    _model.mobileNumber = '';
     notifyListeners();
   }
 }

@@ -7,7 +7,7 @@ import 'signup_view.dart';
 import 'OTPSuccessView.dart';
 import 'signupOtpView.dart';
 import 'HomeServiceView.dart';
-import 'OTPScreen.dart'; // Import the new OTP screen
+import 'OTPScreen.dart';
 import 'package:flutter/services.dart';
 
 class LoginView extends StatelessWidget {
@@ -21,10 +21,23 @@ class LoginView extends StatelessWidget {
   // Function to send OTP
   Future<bool> sendOTP(String mobileNumber) async {
     try {
+      // Change this URL based on your API location
+      String baseUrl = 'http://54kidsstreet.org'; // For domain
+      // String baseUrl = 'http://127.0.0.1:8000'; // For localhost - uncomment if needed
+
+      final url = '$baseUrl/api/customers/$mobileNumber/otp';
+      print('Sending OTP to: $url');
+
       final response = await http.post(
-        Uri.parse('http://54kidsstreet.org/api/customers/$mobileNumber/otp'),
-        headers: {'Content-Type': 'application/json'},
+        Uri.parse(url),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
       );
+
+      print('Send OTP Response Status: ${response.statusCode}');
+      print('Send OTP Response Body: ${response.body}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         return true;
