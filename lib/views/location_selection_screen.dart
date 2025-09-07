@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'map_picker_screen.dart';
 import 'next_button.dart';
 
@@ -12,15 +12,20 @@ class LocationSelectionScreen extends StatefulWidget {
   const LocationSelectionScreen({super.key});
 
   @override
-  _LocationSelectionScreenState createState() => _LocationSelectionScreenState();
+  _LocationSelectionScreenState createState() =>
+      _LocationSelectionScreenState();
 }
 
 class _LocationSelectionScreenState extends State<LocationSelectionScreen> {
-  final TextEditingController _sourceLocalityController = TextEditingController();
-  final TextEditingController _destinationLocalityController = TextEditingController();
+  final TextEditingController _sourceLocalityController =
+  TextEditingController();
+  final TextEditingController _destinationLocalityController =
+  TextEditingController();
+
   bool _normalLiftSource = false;
   bool _serviceLiftSource = false;
   int _floorSource = 0;
+
   bool _normalLiftDestination = false;
   bool _serviceLiftDestination = false;
   int _floorDestination = 0;
@@ -37,9 +42,12 @@ class _LocationSelectionScreenState extends State<LocationSelectionScreen> {
           selectedLocation.latitude,
           selectedLocation.longitude,
         );
+
         if (placemarks.isNotEmpty) {
           Placemark place = placemarks[0];
-          String address = '${place.name ?? ''}, ${place.subLocality ?? ''}, ${place.locality ?? ''}, ${place.postalCode ?? ''}, ${place.country ?? ''}';
+          String address =
+              '${place.name ?? ''}, ${place.subLocality ?? ''}, ${place.locality ?? ''}, ${place.postalCode ?? ''}, ${place.country ?? ''}';
+
           setState(() {
             if (isSource) {
               _sourceLocalityController.text = address;
@@ -49,8 +57,10 @@ class _LocationSelectionScreenState extends State<LocationSelectionScreen> {
           });
         }
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error getting address: $e')));
+        Fluttertoast.showToast(msg: "Error getting address: $e");
       }
+    } else {
+      Fluttertoast.showToast(msg: "No location selected");
     }
   }
 
@@ -83,6 +93,7 @@ class _LocationSelectionScreenState extends State<LocationSelectionScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // ==================== SOURCE ====================
                   const Text(
                     'Source',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -108,7 +119,7 @@ class _LocationSelectionScreenState extends State<LocationSelectionScreen> {
                     value: _normalLiftSource,
                     onChanged: (value) {
                       setState(() {
-                        _normalLiftSource = value!;
+                        _normalLiftSource = value ?? false;
                       });
                     },
                     controlAffinity: ListTileControlAffinity.trailing,
@@ -118,7 +129,7 @@ class _LocationSelectionScreenState extends State<LocationSelectionScreen> {
                     value: _serviceLiftSource,
                     onChanged: (value) {
                       setState(() {
-                        _serviceLiftSource = value!;
+                        _serviceLiftSource = value ?? false;
                       });
                     },
                     controlAffinity: ListTileControlAffinity.trailing,
@@ -130,19 +141,26 @@ class _LocationSelectionScreenState extends State<LocationSelectionScreen> {
                       Row(
                         children: [
                           IconButton(
-                            icon: const Icon(Icons.remove_circle_outline, color: Colors.red),
-                            onPressed: _floorSource > 0 ? () => setState(() => _floorSource--) : null,
+                            icon: const Icon(Icons.remove_circle_outline,
+                                color: Colors.red),
+                            onPressed: _floorSource > 0
+                                ? () => setState(() => _floorSource--)
+                                : null,
                           ),
                           Text(_floorSource.toString()),
                           IconButton(
-                            icon: const Icon(Icons.add_circle_outline, color: Colors.red),
-                            onPressed: () => setState(() => _floorSource++),
+                            icon: const Icon(Icons.add_circle_outline,
+                                color: Colors.red),
+                            onPressed: () =>
+                                setState(() => _floorSource++),
                           ),
                         ],
                       ),
                     ],
                   ),
                   const SizedBox(height: 24),
+
+                  // ==================== DESTINATION ====================
                   const Text(
                     'Destination',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -168,7 +186,7 @@ class _LocationSelectionScreenState extends State<LocationSelectionScreen> {
                     value: _normalLiftDestination,
                     onChanged: (value) {
                       setState(() {
-                        _normalLiftDestination = value!;
+                        _normalLiftDestination = value ?? false;
                       });
                     },
                     controlAffinity: ListTileControlAffinity.trailing,
@@ -178,7 +196,7 @@ class _LocationSelectionScreenState extends State<LocationSelectionScreen> {
                     value: _serviceLiftDestination,
                     onChanged: (value) {
                       setState(() {
-                        _serviceLiftDestination = value!;
+                        _serviceLiftDestination = value ?? false;
                       });
                     },
                     controlAffinity: ListTileControlAffinity.trailing,
@@ -190,13 +208,18 @@ class _LocationSelectionScreenState extends State<LocationSelectionScreen> {
                       Row(
                         children: [
                           IconButton(
-                            icon: const Icon(Icons.remove_circle_outline, color: Colors.red),
-                            onPressed: _floorDestination > 0 ? () => setState(() => _floorDestination--) : null,
+                            icon: const Icon(Icons.remove_circle_outline,
+                                color: Colors.red),
+                            onPressed: _floorDestination > 0
+                                ? () => setState(() => _floorDestination--)
+                                : null,
                           ),
                           Text(_floorDestination.toString()),
                           IconButton(
-                            icon: const Icon(Icons.add_circle_outline, color: Colors.red),
-                            onPressed: () => setState(() => _floorDestination++),
+                            icon: const Icon(Icons.add_circle_outline,
+                                color: Colors.red),
+                            onPressed: () =>
+                                setState(() => _floorDestination++),
                           ),
                         ],
                       ),
