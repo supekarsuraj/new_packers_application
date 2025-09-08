@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../viewmodels/login_viewmodel.dart';
-import 'signup_view.dart';
-import 'OTPSuccessView.dart';
 import 'signupOtpView.dart';
 import 'HomeServiceView.dart';
-
-
+import 'package:flutter/services.dart';
 
 class LoginView extends StatelessWidget {
   const LoginView({super.key});
@@ -51,7 +48,7 @@ class LoginView extends StatelessWidget {
                           children: const [
                             Text(
                               '🇮🇳',
-                              style: TextStyle(fontSize: 20), // Adjust flag size
+                              style: TextStyle(fontSize: 20),
                             ),
                             SizedBox(width: 6),
                             Text(
@@ -70,22 +67,27 @@ class LoginView extends StatelessWidget {
                     onChanged: (value) {
                       viewModel.setMobileNumber(value);
                     },
-                  )
-                  ,
+                  ),
                   const SizedBox(height: 20),
                   ElevatedButton(
                     onPressed: viewModel.isLoading
                         ? null
                         : () {
-                      viewModel.requestOTP();
                       if (viewModel.mobileNumber.length == 10) {
-                        Navigator.push(
+                        viewModel.setLoading(true);
+                        // Directly navigate to HomeServiceView without API call
+                        Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(
-                            builder: (context) =>
-                            // whats app that type messaes
-                          // const OTPSuccessView(),
-                           const HomeServiceView(),
+                            builder: (context) => const HomeServiceView(),
+                          ),
+                        );
+                        viewModel.setLoading(false);
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Please enter a valid 10-digit mobile number'),
+                            backgroundColor: Colors.red,
                           ),
                         );
                       }

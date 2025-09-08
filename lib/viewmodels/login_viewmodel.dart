@@ -19,6 +19,12 @@ class LoginViewModel with ChangeNotifier {
     notifyListeners();
   }
 
+  // Method to manually set loading state (used by LoginView)
+  void setLoading(bool loading) {
+    _isLoading = loading;
+    notifyListeners();
+  }
+
   Future<void> requestOTP() async {
     if (_mobileNumber.isEmpty || _mobileNumber.length != 10) {
       _errorMessage = 'Please enter a valid 10-digit mobile number';
@@ -52,5 +58,16 @@ class LoginViewModel with ChangeNotifier {
       _errorMessage = 'Failed to make call. Please try again.';
       notifyListeners();
     }
+  }
+
+  void clearErrorMessage() {
+    _errorMessage = '';
+    notifyListeners();
+  }
+
+  void clearMobileNumber() {
+    _mobileNumber = '';
+    _model.mobileNumber = '';
+    notifyListeners();
   }
 }
