@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:async';
 import 'dart:developer' as developer;
+import '../lib/views/signup_view.dart';
 import 'HomeServiceView.dart';
 
 class OTPScreen extends StatefulWidget {
@@ -186,8 +187,7 @@ class _OTPScreenState extends State<OTPScreen> {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => const HomeServiceView(),
-        ),
+          builder: (context) => SignupView(mobileNumber: widget.mobileNumber),        ),
       );
     } else {
 

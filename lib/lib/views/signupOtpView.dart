@@ -5,8 +5,8 @@ import '../viewmodels/login_viewmodel.dart';
 import 'signup_view.dart';
 import 'OTPSuccessView.dart';
 
-class signupOtpView extends StatelessWidget {
-  const signupOtpView({super.key});
+class SignupOtpView extends StatelessWidget {
+  const SignupOtpView({super.key});
 
   static const Color darkBlue = Color(0xFF03669d);
   static const Color mediumBlue = Color(0xFF37b3e7);
@@ -67,8 +67,7 @@ class signupOtpView extends StatelessWidget {
                     onChanged: (value) {
                       viewModel.setMobileNumber(value);
                     },
-                  )
-                  ,
+                  ),
                   const SizedBox(height: 20),
                   ElevatedButton(
                     onPressed: viewModel.isLoading
@@ -79,8 +78,16 @@ class signupOtpView extends StatelessWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) =>
-                            const SignupView(),
+                            builder: (context) => SignupView(
+                              mobileNumber: viewModel.mobileNumber,
+                            ),
+                          ),
+                        );
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Please enter a valid 10-digit mobile number'),
+                            backgroundColor: Colors.red,
                           ),
                         );
                       }
