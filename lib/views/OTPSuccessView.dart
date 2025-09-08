@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:provider/provider.dart';
-import '/views/MyRequestScreen.dart';
+import '../lib/views/MyRequestScreen.dart';
 import '/views/PendingScreen.dart';
 import '/views/PartnerSuccessScreen.dart';
 import '/views/PartnerWithUsScreen.dart';

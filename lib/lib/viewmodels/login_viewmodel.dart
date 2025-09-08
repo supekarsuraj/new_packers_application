@@ -3,6 +3,7 @@ import '../models/login_model.dart';
 
 class LoginViewModel with ChangeNotifier {
   final LoginModel _model;
+
   String _mobileNumber = '';
   String _errorMessage = '';
   bool _isLoading = false;
@@ -13,12 +14,20 @@ class LoginViewModel with ChangeNotifier {
   String get errorMessage => _errorMessage;
   bool get isLoading => _isLoading;
 
+  /// Set mobile number
   void setMobileNumber(String value) {
     _mobileNumber = value;
     _model.mobileNumber = value;
     notifyListeners();
   }
 
+  /// Manually set loading state
+  void setLoading(bool loading) {
+    _isLoading = loading;
+    notifyListeners();
+  }
+
+  /// Request OTP from API (dummy inside model for now)
   Future<void> requestOTP() async {
     if (_mobileNumber.isEmpty || _mobileNumber.length != 10) {
       _errorMessage = 'Please enter a valid 10-digit mobile number';
@@ -45,6 +54,7 @@ class LoginViewModel with ChangeNotifier {
     }
   }
 
+  /// Make a phone call
   Future<void> makeCall(String phoneNumber) async {
     try {
       await _model.makeCall(phoneNumber);
@@ -52,5 +62,18 @@ class LoginViewModel with ChangeNotifier {
       _errorMessage = 'Failed to make call. Please try again.';
       notifyListeners();
     }
+  }
+
+  /// Clear error message
+  void clearErrorMessage() {
+    _errorMessage = '';
+    notifyListeners();
+  }
+
+  /// Reset mobile number
+  void clearMobileNumber() {
+    _mobileNumber = '';
+    _model.mobileNumber = '';
+    notifyListeners();
   }
 }

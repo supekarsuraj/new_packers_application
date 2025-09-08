@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'location_selection_screen.dart';
+import '../lib/views/location_selection_screen.dart';
 
 const Color darkBlue = Color(0xFF03669d);
 
