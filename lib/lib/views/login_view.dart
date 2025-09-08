@@ -3,9 +3,10 @@ import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+import '../../models/UserData.dart';
+import '../../views/HomeServiceView.dart';
 import '../../views/signupOtpView.dart';
 import '../viewmodels/login_viewmodel.dart';
-import 'OTPSuccessView.dart';
 
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
@@ -15,11 +16,14 @@ class LoginView extends StatefulWidget {
 }
 
 class _LoginViewState extends State<LoginView> {
+  final TextEditingController _mobileController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
   static const Color darkBlue = Color(0xFF03669d);
 
-  Future<bool> loginUser(String mobile, String password) async {
+  /// Login API: returns UserData if login succeeds, null otherwise
+  Future<UserData?> loginUserAndGetDetails(
+      String mobile, String password) async {
     try {
       final url =
           "http://54kidsstreet.org/api/customers/login?mobile_no=$mobile&password=$password";
@@ -28,21 +32,20 @@ class _LoginViewState extends State<LoginView> {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        // Check API response format
         if (data is Map &&
             (data['status'] == true ||
                 data['success'] == true ||
-                data['message']
-                    ?.toString()
-                    .toLowerCase()
-                    .contains('success') ==
-                    true)) {
-          return true;
+                (data['message']?.toString().toLowerCase().contains('success') ??
+                    false))) {
+          if (data.containsKey('data')) {
+            final userMap = data['data'] as Map<String, dynamic>;
+            return UserData.fromMap(userMap);
+          }
         }
       }
-      return false;
+      return null;
     } catch (e) {
-      return false;
+      return null;
     }
   }
 
@@ -75,8 +78,10 @@ class _LoginViewState extends State<LoginView> {
                         height: 150,
                       ),
                       const SizedBox(height: 20),
+
                       // Mobile Number Field
                       TextField(
+                        controller: _mobileController,
                         keyboardType: TextInputType.phone,
                         maxLength: 10,
                         decoration: const InputDecoration(
@@ -89,6 +94,7 @@ class _LoginViewState extends State<LoginView> {
                         },
                       ),
                       const SizedBox(height: 20),
+
                       // Password Field
                       TextField(
                         controller: _passwordController,
@@ -99,28 +105,30 @@ class _LoginViewState extends State<LoginView> {
                         ),
                       ),
                       const SizedBox(height: 20),
+
                       // Login Button
                       ElevatedButton(
                         onPressed: viewModel.isLoading
                             ? null
                             : () async {
-                          if (viewModel.mobileNumber.length == 10 &&
+                          if (_mobileController.text.length == 10 &&
                               _passwordController.text.isNotEmpty) {
                             viewModel.setLoading(true);
 
-                            bool success = await loginUser(
-                              viewModel.mobileNumber,
+                            final userData =
+                            await loginUserAndGetDetails(
+                              _mobileController.text,
                               _passwordController.text,
                             );
 
                             viewModel.setLoading(false);
 
-                            if (success) {
+                            if (userData != null) {
                               Navigator.pushReplacement(
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) =>
-                                  const OTPSuccessView(),
+                                      HomeServiceView(userData: userData),
                                 ),
                               );
                             } else {
@@ -154,13 +162,15 @@ class _LoginViewState extends State<LoginView> {
                         ),
                       ),
                       const SizedBox(height: 10),
+
                       // Signup Redirect
                       TextButton(
                         onPressed: () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const signupOtpView(),
+                              builder: (context) =>
+                                  signupOtpView(), // Your signup view
                             ),
                           );
                         },
