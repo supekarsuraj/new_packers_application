@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:developer' as developer;
+import '../../models/UserData.dart';
 import '../../views/HomeServiceView.dart';
 import 'OTPSuccessView.dart';
 import 'login_view.dart';
@@ -22,7 +23,7 @@ class SignupView extends StatefulWidget {
 
 class _SignupViewState extends State<SignupView> {
   final _formKey = GlobalKey<FormState>();
-  final nameController = TextEditingController(); // Combined name for customer_name
+  final nameController = TextEditingController();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final pincodeController = TextEditingController();
@@ -132,10 +133,21 @@ class _SignupViewState extends State<SignupView> {
       });
 
       if (isCreated) {
+        // Create UserData object with form data
+        final userData = UserData(
+          customerName: nameController.text.trim(),
+          email: emailController.text.trim(),
+          password: passwordController.text.trim(),
+          pincode: pincodeController.text.trim(),
+          city: cityController.text.trim(),
+          state: selectedState ?? '',
+          mobileNo: widget.mobileNumber,
+        );
+
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => const HomeServiceView(),
+            builder: (context) => HomeServiceView(userData: userData),
           ),
         );
       } else {

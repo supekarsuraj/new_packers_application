@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:url_launcher/url_launcher.dart';
-
 import 'package:new_packers_application/views/PackersMoversScreen.dart';
 import 'package:new_packers_application/views/ACServicesScreen.dart';
 import 'package:new_packers_application/views/CleaningServicesScreen.dart';
 import 'package:new_packers_application/views/OtherHomeServiceScreen.dart';
 import 'package:new_packers_application/views/MyRequestScreen.dart';
+import '../models/UserData.dart';
 
 const Color darkBlue = Color(0xFF03669d);
 const Color mediumBlue = Color(0xFF37b3e7);
@@ -14,7 +14,9 @@ const Color lightBlue = Color(0xFF7ed2f7);
 const Color whiteColor = Color(0xFFf7f7f7);
 
 class HomeServiceView extends StatefulWidget {
-  const HomeServiceView({super.key});
+  final UserData? userData; // Optional UserData to handle dynamic name
+
+  const HomeServiceView({super.key, this.userData});
 
   @override
   State<HomeServiceView> createState() => _HomeServiceViewState();
@@ -61,7 +63,6 @@ class _HomeServiceViewState extends State<HomeServiceView> {
     );
   }
 
-  // WhatsApp chat
   void _openWhatsApp() async {
     final String phoneNumber = '919022062666';
     final String message = 'Hello from Mumbai Metro Packers & Movers app';
@@ -87,7 +88,6 @@ class _HomeServiceViewState extends State<HomeServiceView> {
     }
   }
 
-  // Phone call
   void _makePhoneCall() async {
     final Uri phoneUri = Uri(scheme: 'tel', path: '8888888888');
     if (await canLaunchUrl(phoneUri)) {
@@ -163,7 +163,7 @@ class _HomeServiceViewState extends State<HomeServiceView> {
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  'Hi, Suraj Supekar',
+                  'Hi, ${widget.userData?.customerName ?? 'User'}', // Dynamic name
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -223,10 +223,7 @@ class _HomeServiceViewState extends State<HomeServiceView> {
                     MaterialPageRoute(builder: (context) => const OtherHomeServiceScreen()),
                   );
                 }),
-
-                // ✅ Added My Request button before Call Us
                 _buildButton('My Request', Icons.check_circle, onTap: _navigateToMyRequest),
-
                 _buildButton('Call Us', Icons.call, onTap: _makePhoneCall),
               ],
             ),
