@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import '../lib/views/login_view.dart';
+import '../lib/views/signup_view.dart';
 import '../viewmodels/login_viewmodel.dart';
 import 'signup_view.dart';
-import 'OTPSuccessView.dart';
+import 'OTPScreen.dart';
 
 class signupOtpView extends StatelessWidget {
   const signupOtpView({super.key});
@@ -12,6 +15,40 @@ class signupOtpView extends StatelessWidget {
   static const Color mediumBlue = Color(0xFF37b3e7);
   static const Color lightBlue = Color(0xFF7ed2f7);
   static const Color whiteColor = Color(0xFFf7f7f7);
+
+  // Function to send OTP
+  Future<bool> sendOTP(String mobileNumber) async {
+    try {
+      String baseUrl = 'http://54kidsstreet.org'; // For domain
+      // String baseUrl = 'http://127.0.0.1:8000'; // For localhost - uncomment if needed
+
+      final url = '$baseUrl/api/customers/$mobileNumber/otp';
+      print('Sending OTP to: $url');
+
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      );
+
+      print('Send OTP Response Status: ${response.statusCode}');
+      print('Send OTP Response Body: ${response.body}');
+      print('Send OTP Response Headers: ${response.headers}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        print('OTP sent successfully for $mobileNumber');
+        return true;
+      } else {
+        print('Failed to send OTP: ${response.statusCode} - ${response.body}');
+        return false;
+      }
+    } catch (e) {
+      print('Error sending OTP: $e');
+      return false;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -48,7 +85,7 @@ class signupOtpView extends StatelessWidget {
                           children: const [
                             Text(
                               '🇮🇳',
-                              style: TextStyle(fontSize: 20), // Adjust flag size
+                              style: TextStyle(fontSize: 20),
                             ),
                             SizedBox(width: 6),
                             Text(
@@ -67,20 +104,41 @@ class signupOtpView extends StatelessWidget {
                     onChanged: (value) {
                       viewModel.setMobileNumber(value);
                     },
-                  )
-                  ,
+                  ),
                   const SizedBox(height: 20),
                   ElevatedButton(
                     onPressed: viewModel.isLoading
                         ? null
-                        : () {
-                      viewModel.requestOTP();
+                        : () async {
                       if (viewModel.mobileNumber.length == 10) {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                            const SignupView(),
+                        viewModel.setLoading(true);
+
+                        bool otpSent = await sendOTP(viewModel.mobileNumber);
+
+                        viewModel.setLoading(false);
+
+                        if (otpSent) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => OTPScreen(
+                                mobileNumber: viewModel.mobileNumber,
+                              ),
+                            ),
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Failed to send OTP. Please try again.'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Please enter a valid 10-digit mobile number'),
+                            backgroundColor: Colors.red,
                           ),
                         );
                       }
@@ -106,7 +164,7 @@ class signupOtpView extends StatelessWidget {
                         ),
                       );
                     },
-                    child: const Text('Already have an account ? Login'),
+                    child: const Text('Already have an account? Login'),
                   ),
                 ],
               ),

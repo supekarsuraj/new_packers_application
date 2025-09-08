@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:async';
+import 'dart:developer' as developer;
 import 'HomeServiceView.dart';
 
 class OTPScreen extends StatefulWidget {
@@ -15,7 +16,7 @@ class OTPScreen extends StatefulWidget {
 }
 
 class _OTPScreenState extends State<OTPScreen> {
-  static const Color darkBlue = Color(0xFF03669d); // Same as login view
+  static const Color darkBlue = Color(0xFF03669d);
   static const Color mediumBlue = Color(0xFF37b3e7);
   static const Color lightBlue = Color(0xFF7ed2f7);
 
@@ -25,7 +26,7 @@ class _OTPScreenState extends State<OTPScreen> {
 
   bool isLoading = false;
   bool isResendLoading = false;
-  int resendTimer = 25;
+  int resendTimer = 30; // 30 seconds
   Timer? timer;
 
   @override
@@ -59,19 +60,24 @@ class _OTPScreenState extends State<OTPScreen> {
   }
 
   String getOTP() {
-    return otpControllers.map((controller) => controller.text).join();
+    final otp = otpControllers.map((controller) => controller.text).join().trim();
+    developer.log('[OTPScreen] 📥 OTP constructed: "$otp" (length: ${otp.length})',
+        name: 'flutter', level: 800);
+    return otp;
   }
 
   Future<bool> verifyOTP(String otp) async {
     try {
-      print('🔍 Verifying OTP: $otp for mobile: ${widget.mobileNumber}');
+      developer.log('[OTPScreen] 🔍 Verifying OTP: "$otp" for mobile: ${widget.mobileNumber}',
+          name: 'flutter', level: 800);
 
-      // Change this URL based on your API location
-      String baseUrl = 'http://54kidsstreet.org'; // For domain
-      // String baseUrl = 'http://127.0.0.1:8000'; // For localhost - uncomment if needed
+      String baseUrl = 'http://54kidsstreet.org'; // For production
+      // String baseUrl = 'http://127.0.0.1:8000'; // Uncomment for local testing
+      // String baseUrl = 'http://10.0.2.2:8000'; // Uncomment for Android emulator
+      // String baseUrl = 'http://<your-machine-ip>:8000'; // Uncomment for physical device local testing
 
       final url = '$baseUrl/api/customers/${widget.mobileNumber}/otpverify?otp=$otp';
-      print('🌐 API URL: $url');
+      developer.log('[OTPScreen] 🌐 API URL: $url', name: 'flutter', level: 800);
 
       final response = await http.put(
         Uri.parse(url),
@@ -81,68 +87,65 @@ class _OTPScreenState extends State<OTPScreen> {
         },
       );
 
-      print('📊 Response Status Code: ${response.statusCode}');
-      print('📄 Response Headers: ${response.headers}');
-      print('📝 Response Body: ${response.body}');
+      developer.log('[OTPScreen] 📊 Response Status Code: ${response.statusCode}',
+          name: 'flutter', level: 800);
+      developer.log('[OTPScreen] 📄 Response Headers: ${response.headers}',
+          name: 'flutter', level: 800);
+      developer.log('[OTPScreen] 📝 Raw Response Body: ${response.body}',
+          name: 'flutter', level: 800);
 
       if (response.statusCode == 200) {
-        // Check if response contains success indicator
         if (response.body.isNotEmpty) {
           try {
             final responseData = json.decode(response.body);
-            print('✅ Parsed Response: $responseData');
+            developer.log('[OTPScreen] ✅ Parsed Response: $responseData',
+                name: 'flutter', level: 800);
 
-            // Check for various success indicators in response
-            if (responseData.containsKey('success') && responseData['success'] == true) {
-              return true;
-            } else if (responseData.containsKey('status') && responseData['status'] == 'success') {
-              return true;
-            } else if (responseData.containsKey('message') &&
-                responseData['message'].toString().toLowerCase().contains('success')) {
-              return true;
-            } else if (responseData.containsKey('verified') && responseData['verified'] == true) {
+            if (responseData is Map &&
+                (responseData.containsKey('status') && responseData['status'] == true ||
+                    responseData.containsKey('success') && responseData['success'] == true ||
+                    responseData.containsKey('message') && responseData['message'].toString().toLowerCase().contains('success') ||
+                    responseData.containsKey('verified') && responseData['verified'] == true ||
+                    responseData.containsKey('result') && responseData['result'].toString().toLowerCase() == 'verified')) {
+              developer.log('[OTPScreen] ✅ OTP verification successful',
+                  name: 'flutter', level: 800);
               return true;
             } else {
-              print('❌ Response does not indicate success: $responseData');
+              developer.log('[OTPScreen] ❌ Response does not indicate success: $responseData',
+                  name: 'flutter', level: 800);
               return false;
             }
           } catch (e) {
-            print('⚠️ JSON parsing failed, assuming success based on status code: $e');
-            return true;
+            developer.log('[OTPScreen] ⚠️ JSON parsing error: $e',
+                name: 'flutter', level: 800);
+            developer.log('[OTPScreen] ✅ Assuming success due to status 200',
+                name: 'flutter', level: 800);
+            return true; // Assume success for 200 if JSON parsing fails
           }
         } else {
-          print('✅ Empty response body, assuming success based on status code 200');
+          developer.log('[OTPScreen] ✅ Empty response body, assuming success for status 200',
+              name: 'flutter', level: 800);
           return true;
         }
-      } else if (response.statusCode == 404) {
-        print('❌ API endpoint not found (404)');
-        return false;
-      } else if (response.statusCode == 400) {
-        print('❌ Bad request (400) - Invalid OTP format or expired');
-        return false;
-      } else if (response.statusCode == 401) {
-        print('❌ Unauthorized (401) - Wrong OTP');
-        return false;
       } else {
-        print('❌ OTP verification failed with status: ${response.statusCode}');
+        developer.log('[OTPScreen] ❌ OTP verification failed with status: ${response.statusCode} - ${response.body}',
+            name: 'flutter', level: 800);
         return false;
       }
     } catch (e) {
-      print('💥 Error verifying OTP: $e');
+      developer.log('[OTPScreen] 💥 Error verifying OTP: $e',
+          name: 'flutter', level: 800);
       return false;
     }
   }
 
   Future<bool> resendOTP() async {
     try {
-      print('📤 Resending OTP for mobile: ${widget.mobileNumber}');
+      developer.log('[OTPScreen] 📤 Resending OTP for mobile: ${widget.mobileNumber}',
+          name: 'flutter', level: 800);
 
-      // Change this URL based on your API location
-      String baseUrl = 'http://54kidsstreet.org'; // For domain
-      // String baseUrl = 'http://127.0.0.1:8000'; // For localhost - uncomment if needed
-
+      String baseUrl = 'http://54kidsstreet.org';
       final url = '$baseUrl/api/customers/${widget.mobileNumber}/otp';
-      print('🌐 Resend API URL: $url');
 
       final response = await http.post(
         Uri.parse(url),
@@ -152,17 +155,23 @@ class _OTPScreenState extends State<OTPScreen> {
         },
       );
 
-      print('📊 Resend Response Status: ${response.statusCode}');
-      print('📝 Resend Response Body: ${response.body}');
+      developer.log('[OTPScreen] 📊 Resend Response Status: ${response.statusCode}',
+          name: 'flutter', level: 800);
+      developer.log('[OTPScreen] 📝 Resend Response Body: ${response.body}',
+          name: 'flutter', level: 800);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
+        developer.log('[OTPScreen] ✅ OTP resend successful',
+            name: 'flutter', level: 800);
         return true;
       } else {
-        print('❌ Failed to resend OTP: ${response.statusCode}');
+        developer.log('[OTPScreen] ❌ Failed to resend OTP: ${response.statusCode} - ${response.body}',
+            name: 'flutter', level: 800);
         return false;
       }
     } catch (e) {
-      print('💥 Error resending OTP: $e');
+      developer.log('[OTPScreen] 💥 Error resending OTP: $e',
+          name: 'flutter', level: 800);
       return false;
     }
   }
@@ -173,22 +182,16 @@ class _OTPScreenState extends State<OTPScreen> {
     } else if (value.isEmpty && index > 0) {
       focusNodes[index - 1].requestFocus();
     }
-
-    // Auto-submit when all 6 digits are entered
-    if (index == 5 && value.isNotEmpty) {
-      String fullOtp = getOTP();
-      if (fullOtp.length == 6) {
-        submitOTP();
-      }
-    }
   }
 
   void submitOTP() async {
     String otp = getOTP();
-    if (otp.length != 6) {
+    if (otp.length != 6 || !RegExp(r'^\d{6}$').hasMatch(otp)) {
+      developer.log('[OTPScreen] ❌ OTP length invalid or contains non-digits: "$otp"',
+          name: 'flutter', level: 800);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please enter complete OTP'),
+          content: Text('Please enter a valid 6-digit OTP'),
           backgroundColor: Colors.red,
         ),
       );
@@ -206,6 +209,8 @@ class _OTPScreenState extends State<OTPScreen> {
     });
 
     if (isVerified) {
+      developer.log('[OTPScreen] ✅ Navigating to HomeServiceView',
+          name: 'flutter', level: 800);
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -213,6 +218,8 @@ class _OTPScreenState extends State<OTPScreen> {
         ),
       );
     } else {
+      developer.log('[OTPScreen] ❌ Showing invalid OTP message',
+          name: 'flutter', level: 800);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Invalid OTP. Please try again.'),
@@ -220,7 +227,6 @@ class _OTPScreenState extends State<OTPScreen> {
         ),
       );
 
-      // Clear OTP fields
       for (var controller in otpControllers) {
         controller.clear();
       }
@@ -229,6 +235,8 @@ class _OTPScreenState extends State<OTPScreen> {
   }
 
   void handleResendOTP() async {
+    developer.log('[OTPScreen] 🔄 handleResendOTP called, resendTimer: $resendTimer, isResendLoading: $isResendLoading',
+        name: 'flutter', level: 800);
     if (resendTimer > 0 || isResendLoading) return;
 
     setState(() {
@@ -243,7 +251,7 @@ class _OTPScreenState extends State<OTPScreen> {
 
     if (otpSent) {
       setState(() {
-        resendTimer = 25;
+        resendTimer = 30;
       });
       startResendTimer();
 
@@ -254,7 +262,6 @@ class _OTPScreenState extends State<OTPScreen> {
         ),
       );
 
-      // Clear existing OTP
       for (var controller in otpControllers) {
         controller.clear();
       }
@@ -293,8 +300,6 @@ class _OTPScreenState extends State<OTPScreen> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const SizedBox(height: 20),
-
-              // Logo
               Container(
                 height: 150,
                 width: 150,
@@ -305,10 +310,7 @@ class _OTPScreenState extends State<OTPScreen> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 30),
-
-              // OTP Title
               const Text(
                 'OTP',
                 style: TextStyle(
@@ -317,10 +319,7 @@ class _OTPScreenState extends State<OTPScreen> {
                   color: Colors.black87,
                 ),
               ),
-
               const SizedBox(height: 30),
-
-              // OTP + Resend Row
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 10.0),
                 child: Row(
@@ -350,7 +349,9 @@ class _OTPScreenState extends State<OTPScreen> {
                         const SizedBox(width: 8),
                         if (resendTimer > 0)
                           Text(
-                            '$resendTimer',
+                            resendTimer >= 60
+                                ? '${(resendTimer ~/ 60).toString().padLeft(2, '0')}:${(resendTimer % 60).toString().padLeft(2, '0')}'
+                                : '$resendTimer',
                             style: const TextStyle(
                               fontSize: 14,
                               color: Colors.grey,
@@ -380,10 +381,7 @@ class _OTPScreenState extends State<OTPScreen> {
                   ],
                 ),
               ),
-
               const SizedBox(height: 25),
-
-              // OTP Input Boxes
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: List.generate(6, (index) {
@@ -421,10 +419,7 @@ class _OTPScreenState extends State<OTPScreen> {
                   );
                 }),
               ),
-
               const SizedBox(height: 40),
-
-              // Login Button - Same style as LoginView
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 10.0),
                 child: SizedBox(
@@ -433,7 +428,7 @@ class _OTPScreenState extends State<OTPScreen> {
                   child: ElevatedButton(
                     onPressed: isLoading ? null : submitOTP,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: darkBlue, // Same color as login view
+                      backgroundColor: darkBlue,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -444,7 +439,7 @@ class _OTPScreenState extends State<OTPScreen> {
                       strokeWidth: 2,
                     )
                         : const Text(
-                      'Login',
+                      'Submit',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -454,7 +449,6 @@ class _OTPScreenState extends State<OTPScreen> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 20),
             ],
           ),

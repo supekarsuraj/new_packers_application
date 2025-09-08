@@ -1,13 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 import '../viewmodels/login_viewmodel.dart';
-import 'signup_view.dart';
-import 'OTPSuccessView.dart';
 import 'signupOtpView.dart';
 import 'HomeServiceView.dart';
-import 'OTPScreen.dart';
 import 'package:flutter/services.dart';
 
 class LoginView extends StatelessWidget {
@@ -17,39 +12,6 @@ class LoginView extends StatelessWidget {
   static const Color mediumBlue = Color(0xFF37b3e7);
   static const Color lightBlue = Color(0xFF7ed2f7);
   static const Color whiteColor = Color(0xFFf7f7f7);
-
-  // Function to send OTP
-  Future<bool> sendOTP(String mobileNumber) async {
-    try {
-      // Change this URL based on your API location
-      String baseUrl = 'http://54kidsstreet.org'; // For domain
-      // String baseUrl = 'http://127.0.0.1:8000'; // For localhost - uncomment if needed
-
-      final url = '$baseUrl/api/customers/$mobileNumber/otp';
-      print('Sending OTP to: $url');
-
-      final response = await http.post(
-        Uri.parse(url),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-      );
-
-      print('Send OTP Response Status: ${response.statusCode}');
-      print('Send OTP Response Body: ${response.body}');
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return true;
-      } else {
-        print('Failed to send OTP: ${response.statusCode}');
-        return false;
-      }
-    } catch (e) {
-      print('Error sending OTP: $e');
-      return false;
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -110,31 +72,17 @@ class LoginView extends StatelessWidget {
                   ElevatedButton(
                     onPressed: viewModel.isLoading
                         ? null
-                        : () async {
+                        : () {
                       if (viewModel.mobileNumber.length == 10) {
                         viewModel.setLoading(true);
-
-                        bool otpSent = await sendOTP(viewModel.mobileNumber);
-
+                        // Directly navigate to HomeServiceView without API call
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const HomeServiceView(),
+                          ),
+                        );
                         viewModel.setLoading(false);
-
-                        if (otpSent) {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => OTPScreen(
-                                mobileNumber: viewModel.mobileNumber,
-                              ),
-                            ),
-                          );
-                        } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Failed to send OTP. Please try again.'),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
-                        }
                       } else {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
