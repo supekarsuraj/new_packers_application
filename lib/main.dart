@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
 import 'package:provider/provider.dart';
+import 'lib/viewmodels/login_viewmodel.dart';
 import 'lib/views/login_view.dart';
 import 'views/OTPSuccessView.dart';
-import 'viewmodels/login_viewmodel.dart';
 
 void main() {
   runApp(const MyApp());

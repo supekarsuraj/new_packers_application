@@ -1,18 +1,50 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
 import '../../views/signupOtpView.dart';
 import '../viewmodels/login_viewmodel.dart';
-import 'signup_view.dart';
 import 'OTPSuccessView.dart';
 
-
-class LoginView extends StatelessWidget {
+class LoginView extends StatefulWidget {
   const LoginView({super.key});
 
+  @override
+  State<LoginView> createState() => _LoginViewState();
+}
+
+class _LoginViewState extends State<LoginView> {
+  final TextEditingController _passwordController = TextEditingController();
+
   static const Color darkBlue = Color(0xFF03669d);
-  static const Color mediumBlue = Color(0xFF37b3e7);
-  static const Color lightBlue = Color(0xFF7ed2f7);
-  static const Color whiteColor = Color(0xFFf7f7f7);
+
+  Future<bool> loginUser(String mobile, String password) async {
+    try {
+      final url =
+          "http://54kidsstreet.org/api/customers/login?mobile_no=$mobile&password=$password";
+
+      final response = await http.post(Uri.parse(url));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        // Check API response format
+        if (data is Map &&
+            (data['status'] == true ||
+                data['success'] == true ||
+                data['message']
+                    ?.toString()
+                    .toLowerCase()
+                    .contains('success') ==
+                    true)) {
+          return true;
+        }
+      }
+      return false;
+    } catch (e) {
+      return false;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,90 +58,117 @@ class LoginView extends StatelessWidget {
               backgroundColor: darkBlue,
               foregroundColor: Colors.white,
             ),
-            body: Padding(
+            body: SingleChildScrollView(
               padding: const EdgeInsets.all(16.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Image.asset(
-                    'assets/applogo.jpeg',
-                    height: 150,
-                  ),
-                  const SizedBox(height: 20),
-                  TextField(
-                    keyboardType: TextInputType.phone,
-                    maxLength: 10,
-                    decoration: InputDecoration(
-                      labelText: 'Mobile Number',
-                      counterText: '',
-                      prefixIcon: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: const [
-                            Text(
-                              '🇮🇳',
-                              style: TextStyle(fontSize: 20), // Adjust flag size
-                            ),
-                            SizedBox(width: 6),
-                            Text(
-                              '+91',
-                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-                            ),
-                          ],
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: MediaQuery.of(context).size.height -
+                      MediaQuery.of(context).padding.top -
+                      kToolbarHeight,
+                ),
+                child: IntrinsicHeight(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Image.asset(
+                        'assets/applogo.jpeg',
+                        height: 150,
+                      ),
+                      const SizedBox(height: 20),
+                      // Mobile Number Field
+                      TextField(
+                        keyboardType: TextInputType.phone,
+                        maxLength: 10,
+                        decoration: const InputDecoration(
+                          labelText: 'Mobile Number',
+                          counterText: '',
+                          border: OutlineInputBorder(),
+                        ),
+                        onChanged: (value) {
+                          viewModel.setMobileNumber(value);
+                        },
+                      ),
+                      const SizedBox(height: 20),
+                      // Password Field
+                      TextField(
+                        controller: _passwordController,
+                        obscureText: true,
+                        decoration: const InputDecoration(
+                          labelText: 'Password',
+                          border: OutlineInputBorder(),
                         ),
                       ),
-                      prefixIconConstraints: const BoxConstraints(
-                        minWidth: 0,
-                        minHeight: 0,
-                      ),
-                      border: const OutlineInputBorder(),
-                    ),
-                    onChanged: (value) {
-                      viewModel.setMobileNumber(value);
-                    },
-                  )
-                  ,
-                  const SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: viewModel.isLoading
-                        ? null
-                        : () {
-                      viewModel.requestOTP();
-                      if (viewModel.mobileNumber.length == 10) {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                            const OTPSuccessView(),
-                          ),
-                        );
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: darkBlue,
-                      minimumSize: const Size(double.infinity, 50),
-                    ),
-                    child: viewModel.isLoading
-                        ? const CircularProgressIndicator(color: Colors.white)
-                        : const Text(
-                      'Login',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  TextButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const signupOtpView(),
+                      const SizedBox(height: 20),
+                      // Login Button
+                      ElevatedButton(
+                        onPressed: viewModel.isLoading
+                            ? null
+                            : () async {
+                          if (viewModel.mobileNumber.length == 10 &&
+                              _passwordController.text.isNotEmpty) {
+                            viewModel.setLoading(true);
+
+                            bool success = await loginUser(
+                              viewModel.mobileNumber,
+                              _passwordController.text,
+                            );
+
+                            viewModel.setLoading(false);
+
+                            if (success) {
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                  const OTPSuccessView(),
+                                ),
+                              );
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                      'Invalid mobile number or password'),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                    'Please enter valid mobile number and password'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: darkBlue,
+                          minimumSize: const Size(double.infinity, 50),
                         ),
-                      );
-                    },
-                    child: const Text('Create an Account? Signup'),
+                        child: viewModel.isLoading
+                            ? const CircularProgressIndicator(color: Colors.white)
+                            : const Text(
+                          'Login',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      // Signup Redirect
+                      TextButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const signupOtpView(),
+                            ),
+                          );
+                        },
+                        child: const Text('Create an Account? Signup'),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           );
