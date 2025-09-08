@@ -61,23 +61,18 @@ class _OTPScreenState extends State<OTPScreen> {
 
   String getOTP() {
     final otp = otpControllers.map((controller) => controller.text).join().trim();
-    developer.log('[OTPScreen] 📥 OTP constructed: "$otp" (length: ${otp.length})',
-        name: 'flutter', level: 800);
+
     return otp;
   }
 
   Future<bool> verifyOTP(String otp) async {
     try {
-      developer.log('[OTPScreen] 🔍 Verifying OTP: "$otp" for mobile: ${widget.mobileNumber}',
-          name: 'flutter', level: 800);
 
-      String baseUrl = 'http://54kidsstreet.org'; // For production
-      // String baseUrl = 'http://127.0.0.1:8000'; // Uncomment for local testing
-      // String baseUrl = 'http://10.0.2.2:8000'; // Uncomment for Android emulator
-      // String baseUrl = 'http://<your-machine-ip>:8000'; // Uncomment for physical device local testing
+
+      String baseUrl = 'http://54kidsstreet.org';
 
       final url = '$baseUrl/api/customers/${widget.mobileNumber}/otpverify?otp=$otp';
-      developer.log('[OTPScreen] 🌐 API URL: $url', name: 'flutter', level: 800);
+
 
       final response = await http.put(
         Uri.parse(url),
@@ -87,12 +82,7 @@ class _OTPScreenState extends State<OTPScreen> {
         },
       );
 
-      developer.log('[OTPScreen] 📊 Response Status Code: ${response.statusCode}',
-          name: 'flutter', level: 800);
-      developer.log('[OTPScreen] 📄 Response Headers: ${response.headers}',
-          name: 'flutter', level: 800);
-      developer.log('[OTPScreen] 📝 Raw Response Body: ${response.body}',
-          name: 'flutter', level: 800);
+
 
       if (response.statusCode == 200) {
         if (response.body.isNotEmpty) {
@@ -107,42 +97,32 @@ class _OTPScreenState extends State<OTPScreen> {
                     responseData.containsKey('message') && responseData['message'].toString().toLowerCase().contains('success') ||
                     responseData.containsKey('verified') && responseData['verified'] == true ||
                     responseData.containsKey('result') && responseData['result'].toString().toLowerCase() == 'verified')) {
-              developer.log('[OTPScreen] ✅ OTP verification successful',
-                  name: 'flutter', level: 800);
+
               return true;
             } else {
-              developer.log('[OTPScreen] ❌ Response does not indicate success: $responseData',
-                  name: 'flutter', level: 800);
+
               return false;
             }
           } catch (e) {
-            developer.log('[OTPScreen] ⚠️ JSON parsing error: $e',
-                name: 'flutter', level: 800);
-            developer.log('[OTPScreen] ✅ Assuming success due to status 200',
-                name: 'flutter', level: 800);
-            return true; // Assume success for 200 if JSON parsing fails
+            return true;
           }
         } else {
-          developer.log('[OTPScreen] ✅ Empty response body, assuming success for status 200',
-              name: 'flutter', level: 800);
+
           return true;
         }
       } else {
-        developer.log('[OTPScreen] ❌ OTP verification failed with status: ${response.statusCode} - ${response.body}',
-            name: 'flutter', level: 800);
+
         return false;
       }
     } catch (e) {
-      developer.log('[OTPScreen] 💥 Error verifying OTP: $e',
-          name: 'flutter', level: 800);
+
       return false;
     }
   }
 
   Future<bool> resendOTP() async {
     try {
-      developer.log('[OTPScreen] 📤 Resending OTP for mobile: ${widget.mobileNumber}',
-          name: 'flutter', level: 800);
+
 
       String baseUrl = 'http://54kidsstreet.org';
       final url = '$baseUrl/api/customers/${widget.mobileNumber}/otp';
@@ -155,23 +135,17 @@ class _OTPScreenState extends State<OTPScreen> {
         },
       );
 
-      developer.log('[OTPScreen] 📊 Resend Response Status: ${response.statusCode}',
-          name: 'flutter', level: 800);
-      developer.log('[OTPScreen] 📝 Resend Response Body: ${response.body}',
-          name: 'flutter', level: 800);
+
+
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        developer.log('[OTPScreen] ✅ OTP resend successful',
-            name: 'flutter', level: 800);
         return true;
       } else {
-        developer.log('[OTPScreen] ❌ Failed to resend OTP: ${response.statusCode} - ${response.body}',
-            name: 'flutter', level: 800);
+
         return false;
       }
     } catch (e) {
-      developer.log('[OTPScreen] 💥 Error resending OTP: $e',
-          name: 'flutter', level: 800);
+
       return false;
     }
   }
@@ -187,8 +161,7 @@ class _OTPScreenState extends State<OTPScreen> {
   void submitOTP() async {
     String otp = getOTP();
     if (otp.length != 6 || !RegExp(r'^\d{6}$').hasMatch(otp)) {
-      developer.log('[OTPScreen] ❌ OTP length invalid or contains non-digits: "$otp"',
-          name: 'flutter', level: 800);
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please enter a valid 6-digit OTP'),
@@ -209,8 +182,7 @@ class _OTPScreenState extends State<OTPScreen> {
     });
 
     if (isVerified) {
-      developer.log('[OTPScreen] ✅ Navigating to HomeServiceView',
-          name: 'flutter', level: 800);
+
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -218,8 +190,7 @@ class _OTPScreenState extends State<OTPScreen> {
         ),
       );
     } else {
-      developer.log('[OTPScreen] ❌ Showing invalid OTP message',
-          name: 'flutter', level: 800);
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Invalid OTP. Please try again.'),
@@ -235,8 +206,7 @@ class _OTPScreenState extends State<OTPScreen> {
   }
 
   void handleResendOTP() async {
-    developer.log('[OTPScreen] 🔄 handleResendOTP called, resendTimer: $resendTimer, isResendLoading: $isResendLoading',
-        name: 'flutter', level: 800);
+
     if (resendTimer > 0 || isResendLoading) return;
 
     setState(() {
@@ -251,7 +221,7 @@ class _OTPScreenState extends State<OTPScreen> {
 
     if (otpSent) {
       setState(() {
-        resendTimer = 30;
+        resendTimer = 120;
       });
       startResendTimer();
 
