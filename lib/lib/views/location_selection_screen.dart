@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import '../../views/next_button.dart';
 import 'map_picker_screen.dart';
-import 'next_button.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
 const Color whiteColor = Color(0xFFf7f7f7);

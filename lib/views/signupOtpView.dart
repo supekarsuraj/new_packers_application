@@ -1,11 +1,10 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';// imp
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import '../lib/views/login_view.dart';
+import 'login_view.dart';
 import '../lib/views/signup_view.dart';
 import '../viewmodels/login_viewmodel.dart';
-import 'signup_view.dart';
 import 'OTPScreen.dart';
 
 class signupOtpView extends StatelessWidget {

@@ -4,7 +4,6 @@ import '../../views/signupOtpView.dart';
 import '../viewmodels/login_viewmodel.dart';
 import 'signup_view.dart';
 import 'OTPSuccessView.dart';
-import 'signupOtpView.dart';
 
 
 class LoginView extends StatelessWidget {

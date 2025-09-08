@@ -4,8 +4,8 @@ import 'dart:convert';
 import 'dart:developer' as developer;
 import '../../models/UserData.dart';
 import '../../views/HomeServiceView.dart';
+import '../../views/login_view.dart';
 import 'OTPSuccessView.dart';
-import 'login_view.dart';
 
 class SignupView extends StatefulWidget {
   final String mobileNumber;
