@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../lib/views/location_selection_screen.dart';
 import '../viewmodels/shift_house_viewmodel.dart';
 import 'item_detail_screen.dart';
-import 'location_selection_screen.dart';
 
 const Color darkBlue = Color(0xFF03669d);
 const Color mediumBlue = Color(0xFF37b3e7);
