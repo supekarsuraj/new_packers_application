@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';// imp
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'login_view.dart';
+import '../lib/views/login_view.dart';
 import '../lib/views/signup_view.dart';
 import '../viewmodels/login_viewmodel.dart';
 import 'OTPScreen.dart';

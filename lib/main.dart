@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:provider/provider.dart';
-import 'views/login_view.dart';
+import 'lib/views/login_view.dart';
 import 'views/OTPSuccessView.dart';
 import 'viewmodels/login_viewmodel.dart';
 
