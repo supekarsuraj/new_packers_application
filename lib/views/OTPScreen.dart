@@ -9,8 +9,9 @@ import 'HomeServiceView.dart';
 
 class OTPScreen extends StatefulWidget {
   final String mobileNumber;
+  final int source; // Added source parameter
 
-  const OTPScreen({super.key, required this.mobileNumber});
+  const OTPScreen({super.key, required this.mobileNumber, required this.source});
 
   @override
   State<OTPScreen> createState() => _OTPScreenState();
@@ -62,18 +63,13 @@ class _OTPScreenState extends State<OTPScreen> {
 
   String getOTP() {
     final otp = otpControllers.map((controller) => controller.text).join().trim();
-
     return otp;
   }
 
   Future<bool> verifyOTP(String otp) async {
     try {
-
-
       String baseUrl = 'http://54kidsstreet.org';
-
       final url = '$baseUrl/api/customers/${widget.mobileNumber}/otpverify?otp=$otp';
-
 
       final response = await http.put(
         Uri.parse(url),
@@ -82,8 +78,6 @@ class _OTPScreenState extends State<OTPScreen> {
           'Accept': 'application/json',
         },
       );
-
-
 
       if (response.statusCode == 200) {
         if (response.body.isNotEmpty) {
@@ -98,33 +92,26 @@ class _OTPScreenState extends State<OTPScreen> {
                     responseData.containsKey('message') && responseData['message'].toString().toLowerCase().contains('success') ||
                     responseData.containsKey('verified') && responseData['verified'] == true ||
                     responseData.containsKey('result') && responseData['result'].toString().toLowerCase() == 'verified')) {
-
               return true;
             } else {
-
               return false;
             }
           } catch (e) {
             return true;
           }
         } else {
-
           return true;
         }
       } else {
-
         return false;
       }
     } catch (e) {
-
       return false;
     }
   }
 
   Future<bool> resendOTP() async {
     try {
-
-
       String baseUrl = 'http://54kidsstreet.org';
       final url = '$baseUrl/api/customers/${widget.mobileNumber}/otp';
 
@@ -136,17 +123,12 @@ class _OTPScreenState extends State<OTPScreen> {
         },
       );
 
-
-
-
       if (response.statusCode == 200 || response.statusCode == 201) {
         return true;
       } else {
-
         return false;
       }
     } catch (e) {
-
       return false;
     }
   }
@@ -162,7 +144,6 @@ class _OTPScreenState extends State<OTPScreen> {
   void submitOTP() async {
     String otp = getOTP();
     if (otp.length != 6 || !RegExp(r'^\d{6}$').hasMatch(otp)) {
-
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please enter a valid 6-digit OTP'),
@@ -183,14 +164,23 @@ class _OTPScreenState extends State<OTPScreen> {
     });
 
     if (isVerified) {
-
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => SignupView(mobileNumber: widget.mobileNumber),        ),
-      );
+      // Navigate based on source value
+      if (widget.source == 1) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => HomeServiceView(),
+          ),
+        );
+      } else if (widget.source == 2) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => SignupView(mobileNumber: widget.mobileNumber),
+          ),
+        );
+      }
     } else {
-
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Invalid OTP. Please try again.'),
@@ -206,7 +196,6 @@ class _OTPScreenState extends State<OTPScreen> {
   }
 
   void handleResendOTP() async {
-
     if (resendTimer > 0 || isResendLoading) return;
 
     setState(() {
