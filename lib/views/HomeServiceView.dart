@@ -25,28 +25,25 @@ class HomeServiceView extends StatefulWidget {
 }
 
 class _HomeServiceViewState extends State<HomeServiceView> {
-  final List<String> images = [
-    'assets/parcelwala4.jpg',
-    'assets/parcelwala5.jpg',
-    'assets/parcelwala6.jpg',
-    'assets/parcelwala7.jpg',
-  ];
-
   int currentIndex = 0;
   final PageController _pageController = PageController(initialPage: 0);
 
   List<dynamic> categories = [];
-  bool isLoading = true;
+  List<String> bannerImages = [];
+  bool isLoadingCategories = true;
+  bool isLoadingBanners = true;
 
   @override
   void initState() {
     super.initState();
     _fetchCategories();
+    _fetchBanners();
 
+    // Auto-slide banner every 3 seconds
     Timer.periodic(const Duration(seconds: 3), (Timer timer) {
-      if (mounted) {
+      if (mounted && bannerImages.isNotEmpty) {
         setState(() {
-          currentIndex = (currentIndex + 1) % images.length;
+          currentIndex = (currentIndex + 1) % bannerImages.length;
           _pageController.animateToPage(
             currentIndex,
             duration: const Duration(milliseconds: 300),
@@ -57,24 +54,66 @@ class _HomeServiceViewState extends State<HomeServiceView> {
     });
   }
 
+  // Fetch categories from API
   Future<void> _fetchCategories() async {
     try {
-      final response = await http.get(
-        Uri.parse("https://54kidsstreet.org/api/category"),
-      );
+      final response =
+      await http.get(Uri.parse("https://54kidsstreet.org/api/category"));
 
       if (response.statusCode == 200) {
         final jsonData = json.decode(response.body);
         setState(() {
           categories = jsonData["data"];
-          isLoading = false;
+          isLoadingCategories = false;
         });
       } else {
-        setState(() => isLoading = false);
+        setState(() => isLoadingCategories = false);
       }
     } catch (e) {
-      setState(() => isLoading = false);
+      setState(() => isLoadingCategories = false);
     }
+  }
+
+  // Fetch banners from API
+  Future<void> _fetchBanners() async {
+    try {
+      final response =
+      await http.get(Uri.parse("https://54kidsstreet.org/api/banner"));
+
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body);
+        final List<dynamic> banners = jsonData["data"];
+
+        setState(() {
+          bannerImages = banners
+              .map<String>((b) =>
+          "https://54kidsstreet.org/uploads/banner/${b["image"]}")
+              .toList();
+
+          // fallback to assets if no banners
+          if (bannerImages.isEmpty) {
+            _useFallbackBanners();
+          }
+          isLoadingBanners = false;
+        });
+      } else {
+        _useFallbackBanners();
+      }
+    } catch (e) {
+      _useFallbackBanners();
+    }
+  }
+
+  void _useFallbackBanners() {
+    setState(() {
+      bannerImages = [
+        'assets/parcelwala4.jpg',
+        'assets/parcelwala5.jpg',
+        'assets/parcelwala6.jpg',
+        'assets/parcelwala7.jpg',
+      ];
+      isLoadingBanners = false;
+    });
   }
 
   @override
@@ -83,6 +122,7 @@ class _HomeServiceViewState extends State<HomeServiceView> {
     super.dispose();
   }
 
+  // Navigation for My Request
   void _navigateToMyRequest() {
     Navigator.push(
       context,
@@ -90,6 +130,7 @@ class _HomeServiceViewState extends State<HomeServiceView> {
     );
   }
 
+  // Open WhatsApp
   void _openWhatsApp() async {
     final String phoneNumber = '919022062666';
     final String message = 'Hello from Mumbai Metro Packers & Movers app';
@@ -115,6 +156,7 @@ class _HomeServiceViewState extends State<HomeServiceView> {
     }
   }
 
+  // Make phone call
   void _makePhoneCall() async {
     final Uri phoneUri = Uri(scheme: 'tel', path: '8888888888');
     if (await canLaunchUrl(phoneUri)) {
@@ -126,6 +168,7 @@ class _HomeServiceViewState extends State<HomeServiceView> {
     }
   }
 
+  // Build button for constant actions
   Widget _buildButton(String title, IconData icon, {VoidCallback? onTap}) {
     return ElevatedButton(
       onPressed: onTap ?? () {},
@@ -156,24 +199,26 @@ class _HomeServiceViewState extends State<HomeServiceView> {
     );
   }
 
-  // Convert API category to button
+  // Build category button dynamically
   Widget _buildCategoryButton(Map<String, dynamic> category) {
     String name = category["name"] ?? "Unknown";
     String? imageUrl = category["image_url"];
-
     IconData defaultIcon = Icons.category;
 
     return ElevatedButton(
       onPressed: () {
-        // Navigate based on category name
         if (name.toLowerCase().contains("packer")) {
-          Navigator.push(context, MaterialPageRoute(builder: (_) => const PackersMoversScreen()));
+          Navigator.push(context,
+              MaterialPageRoute(builder: (_) => const PackersMoversScreen()));
         } else if (name.toLowerCase().contains("ac")) {
-          Navigator.push(context, MaterialPageRoute(builder: (_) => const ACServicesScreen()));
+          Navigator.push(
+              context, MaterialPageRoute(builder: (_) => const ACServicesScreen()));
         } else if (name.toLowerCase().contains("clean")) {
-          Navigator.push(context, MaterialPageRoute(builder: (_) => const CleaningServicesScreen()));
+          Navigator.push(context,
+              MaterialPageRoute(builder: (_) => const CleaningServicesScreen()));
         } else {
-          Navigator.push(context, MaterialPageRoute(builder: (_) => const OtherHomeServiceScreen()));
+          Navigator.push(context,
+              MaterialPageRoute(builder: (_) => const OtherHomeServiceScreen()));
         }
       },
       style: ElevatedButton.styleFrom(
@@ -188,9 +233,15 @@ class _HomeServiceViewState extends State<HomeServiceView> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           imageUrl != null && imageUrl.isNotEmpty
-              ? Image.network(imageUrl, height: 28, width: 28, errorBuilder: (c, e, s) {
-            return Icon(defaultIcon, color: mediumBlue, size: 28);
-          })
+              ? FadeInImage.assetNetwork(
+            placeholder: 'assets/parcelwala4.jpg', // fallback asset
+            image: imageUrl,
+            height: 28,
+            width: 28,
+            fit: BoxFit.cover,
+            imageErrorBuilder: (c, e, s) =>
+                Icon(defaultIcon, color: mediumBlue, size: 28),
+          )
               : Icon(defaultIcon, color: mediumBlue, size: 28),
           const SizedBox(height: 5),
           Text(
@@ -254,21 +305,36 @@ class _HomeServiceViewState extends State<HomeServiceView> {
             Container(
               height: 200,
               color: lightBlue,
-              child: PageView.builder(
+              child: isLoadingBanners
+                  ? const Center(child: CircularProgressIndicator())
+                  : PageView.builder(
                 controller: _pageController,
-                itemCount: images.length,
+                itemCount: bannerImages.length,
                 onPageChanged: (index) {
                   setState(() {
                     currentIndex = index;
                   });
                 },
                 itemBuilder: (context, index) {
-                  return Image.asset(images[index], fit: BoxFit.cover);
+                  final imagePath = bannerImages[index];
+                  return ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: imagePath.endsWith(".webp")
+                        ? FadeInImage.assetNetwork(
+                      placeholder: 'assets/parcelwala4.jpg',
+                      image: imagePath,
+                      fit: BoxFit.cover,
+                      imageErrorBuilder: (c, e, s) =>
+                          Image.asset('assets/parcelwala4.jpg',
+                              fit: BoxFit.cover),
+                    )
+                        : Image.asset(imagePath, fit: BoxFit.cover),
+                  );
                 },
               ),
             ),
             const SizedBox(height: 20),
-            isLoading
+            isLoadingCategories
                 ? const Center(child: CircularProgressIndicator())
                 : Expanded(
               child: GridView.count(
@@ -278,8 +344,9 @@ class _HomeServiceViewState extends State<HomeServiceView> {
                 mainAxisSpacing: 10,
                 childAspectRatio: 2.0,
                 children: [
-                  ...categories.map((cat) => _buildCategoryButton(cat)).toList(),
-                  _buildButton('My Request', Icons.check_circle, onTap: _navigateToMyRequest),
+                  ...categories.map((cat) => _buildCategoryButton(cat)),
+                  _buildButton('My Request', Icons.check_circle,
+                      onTap: _navigateToMyRequest),
                   _buildButton('Call Us', Icons.call, onTap: _makePhoneCall),
                 ],
               ),
