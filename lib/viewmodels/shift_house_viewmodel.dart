@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/ItemCategory.dart';
 import '../models/shift_house_model.dart';
+import '../views/SelectedProduct.dart';
 
 class ShiftHouseViewModel extends ChangeNotifier {
   ShiftHouseModel _shiftHouseData = ShiftHouseModel();
@@ -100,9 +102,9 @@ class ShiftHouseViewModel extends ChangeNotifier {
     ItemCategory(
       name: 'WARDROBE & CABINET',
       icon: '🚪',
-      items: [ ItemDetail(name: 'WARDROBE (1 DOOR)'),
+      items: [
+        ItemDetail(name: 'WARDROBE (1 DOOR)'),
         ItemDetail(name: 'WARDROBE (2 DOOR)'),
-
         ItemDetail(name: 'WARDROBE (3 DOOR)'),
         ItemDetail(name: 'WARDROBE (4 DOOR)'),
         ItemDetail(name: 'CHEST OF DRAWER (SMALL)'),
@@ -147,7 +149,6 @@ class ShiftHouseViewModel extends ChangeNotifier {
         ItemDetail(name: 'KIDS BICYCLE/SCOOTER'),
         ItemDetail(name: 'MIRROR'),
         ItemDetail(name: 'SEWING MACHINE'),
-
         ItemDetail(name: 'PAINTINGS/PHOTO FRAME(SMALL)'),],
     ),
     ItemCategory(
@@ -170,7 +171,6 @@ class ShiftHouseViewModel extends ChangeNotifier {
       name: 'VEHICLES',
       icon: '🚗',
       items: [ ItemDetail(name: 'SCOOTY'),
-        ItemDetail(name: 'SCOOTY'),
         ItemDetail(name: 'BIKE <= 200 CC'),
         ItemDetail(name: 'BIKE > 200 CC AND <= 350 CC'),
         ItemDetail(name: 'LUXURY BIKE (E.G., HARLEY DAVIDSON)'),
@@ -184,7 +184,7 @@ class ShiftHouseViewModel extends ChangeNotifier {
       name: 'Office Items',
       icon: '',
       items: [ ItemDetail(name: 'Laptop'),
-        ],
+      ],
     ),
   ];
 
@@ -239,5 +239,16 @@ class ShiftHouseViewModel extends ChangeNotifier {
       total += getItemCount(item.name);
     }
     return total;
+  }
+
+  // New method to get selected products
+  List<SelectedProduct> getSelectedProducts() {
+    List<SelectedProduct> selectedProducts = [];
+    for (var entry in _shiftHouseData.itemCounts.entries) {
+      if (entry.value > 0) {
+        selectedProducts.add(SelectedProduct(productName: entry.key, count: entry.value));
+      }
+    }
+    return selectedProducts;
   }
 }

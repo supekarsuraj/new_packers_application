@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+import 'ServiceSelectionScreen.dart';
+
 const Color darkBlue = Color(0xFF03669d);
 const Color mediumBlue = Color(0xFF37b3e7);
 const Color lightBlue = Color(0xFF7ed2f7);
@@ -96,55 +98,40 @@ class _SubCategoryScreenState extends State<SubCategoryScreen> {
     }
   }
 
-  // Build subcategory button matching ACServicesScreen style
+  // Build subcategory button matching ShiftHouseScreen style
   Widget _buildSubCategoryButton(SubCategory subCategory) {
-    // Define gradient colors dynamically (example pattern; adjust as needed)
-    Color startColor = darkBlue;
-    Color endColor = lightBlue;
-    if (subCategory.id % 2 == 0) {
-      startColor = mediumBlue;
-      endColor = darkBlue;
-    } else if (subCategory.id % 3 == 0) {
-      startColor = lightBlue;
-      endColor = mediumBlue;
-    }
-
-    return InkWell(
-      onTap: () {
-        // Show a snackbar for now; replace with navigation if needed
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Selected: ${subCategory.subCategoryName}'),
-            backgroundColor: mediumBlue,
-          ),
-        );
-      },
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12.0),
       child: Container(
-        width: double.infinity,
-        height: 50,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          gradient: LinearGradient(
-            colors: [startColor, endColor],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.shade400,
-              offset: const Offset(2, 2),
-              blurRadius: 5,
-            ),
-          ],
+          borderRadius: BorderRadius.circular(25),
         ),
-        alignment: Alignment.center,
-        child: Text(
-          subCategory.subCategoryName,
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            color: whiteColor,
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
+        child: ElevatedButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ServiceSelectionScreen(
+                  subCategoryId: subCategory.id,
+                  subCategoryName: subCategory.subCategoryName,
+                ),
+              ),
+            );
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: mediumBlue,
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(25),
+            ),
+          ),
+          child: Text(
+            subCategory.subCategoryName,
+            style: const TextStyle(
+              color: whiteColor,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
       ),
@@ -165,7 +152,7 @@ class _SubCategoryScreenState extends State<SubCategoryScreen> {
           ),
         ),
         backgroundColor: darkBlue,
-        elevation: 2,
+        elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: whiteColor),
           onPressed: () => Navigator.pop(context),
@@ -190,10 +177,7 @@ class _SubCategoryScreenState extends State<SubCategoryScreen> {
             itemCount: subCategories.length,
             itemBuilder: (context, index) {
               final subCategory = subCategories[index];
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 8.0), // Matches ACServicesScreen padding
-                child: _buildSubCategoryButton(subCategory),
-              );
+              return _buildSubCategoryButton(subCategory);
             },
           ),
         ),
