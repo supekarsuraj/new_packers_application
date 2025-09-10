@@ -96,10 +96,21 @@ class _SubCategoryScreenState extends State<SubCategoryScreen> {
     }
   }
 
-  // Build subcategory button without icon, matching HomeServiceView style
+  // Build subcategory button matching ACServicesScreen style
   Widget _buildSubCategoryButton(SubCategory subCategory) {
-    return ElevatedButton(
-      onPressed: () {
+    // Define gradient colors dynamically (example pattern; adjust as needed)
+    Color startColor = darkBlue;
+    Color endColor = lightBlue;
+    if (subCategory.id % 2 == 0) {
+      startColor = mediumBlue;
+      endColor = darkBlue;
+    } else if (subCategory.id % 3 == 0) {
+      startColor = lightBlue;
+      endColor = mediumBlue;
+    }
+
+    return InkWell(
+      onTap: () {
         // Show a snackbar for now; replace with navigation if needed
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -108,27 +119,34 @@ class _SubCategoryScreenState extends State<SubCategoryScreen> {
           ),
         );
       },
-      style: ElevatedButton.styleFrom(
-        backgroundColor: whiteColor,
-        side: const BorderSide(color: mediumBlue, width: 2),
-        minimumSize: const Size(double.infinity, 60),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            subCategory.subCategoryName,
-            style: const TextStyle(
-              color: darkBlue,
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-            ),
-            textAlign: TextAlign.center,
+      child: Container(
+        width: double.infinity,
+        height: 50,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          gradient: LinearGradient(
+            colors: [startColor, endColor],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
-        ],
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.shade400,
+              offset: const Offset(2, 2),
+              blurRadius: 5,
+            ),
+          ],
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          subCategory.subCategoryName,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            color: whiteColor,
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+          ),
+        ),
       ),
     );
   }
@@ -143,7 +161,7 @@ class _SubCategoryScreenState extends State<SubCategoryScreen> {
             fontFamily: 'Poppins',
             fontWeight: FontWeight.bold,
             color: whiteColor,
-            fontSize: 18,
+            fontSize: 20,
           ),
         ),
         backgroundColor: darkBlue,
@@ -163,7 +181,7 @@ class _SubCategoryScreenState extends State<SubCategoryScreen> {
               ? Center(
             child: Text(
               errorMessage!,
-              style: const TextStyle(color: darkBlue), // Using darkBlue for error
+              style: const TextStyle(color: darkBlue),
             ),
           )
               : subCategories.isEmpty
@@ -173,7 +191,7 @@ class _SubCategoryScreenState extends State<SubCategoryScreen> {
             itemBuilder: (context, index) {
               final subCategory = subCategories[index];
               return Padding(
-                padding: const EdgeInsets.only(bottom: 10.0),
+                padding: const EdgeInsets.only(bottom: 8.0), // Matches ACServicesScreen padding
                 child: _buildSubCategoryButton(subCategory),
               );
             },
