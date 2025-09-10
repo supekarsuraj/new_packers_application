@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:new_packers_application/views/PackersMoversScreen.dart';
 import 'package:new_packers_application/views/ACServicesScreen.dart';
@@ -14,7 +16,7 @@ const Color lightBlue = Color(0xFF7ed2f7);
 const Color whiteColor = Color(0xFFf7f7f7);
 
 class HomeServiceView extends StatefulWidget {
-  final UserData? userData; // Optional UserData to handle dynamic name
+  final UserData? userData;
 
   const HomeServiceView({super.key, this.userData});
 
@@ -33,9 +35,14 @@ class _HomeServiceViewState extends State<HomeServiceView> {
   int currentIndex = 0;
   final PageController _pageController = PageController(initialPage: 0);
 
+  List<dynamic> categories = [];
+  bool isLoading = true;
+
   @override
   void initState() {
     super.initState();
+    _fetchCategories();
+
     Timer.periodic(const Duration(seconds: 3), (Timer timer) {
       if (mounted) {
         setState(() {
@@ -48,6 +55,26 @@ class _HomeServiceViewState extends State<HomeServiceView> {
         });
       }
     });
+  }
+
+  Future<void> _fetchCategories() async {
+    try {
+      final response = await http.get(
+        Uri.parse("https://54kidsstreet.org/api/category"),
+      );
+
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body);
+        setState(() {
+          categories = jsonData["data"];
+          isLoading = false;
+        });
+      } else {
+        setState(() => isLoading = false);
+      }
+    } catch (e) {
+      setState(() => isLoading = false);
+    }
   }
 
   @override
@@ -129,6 +156,57 @@ class _HomeServiceViewState extends State<HomeServiceView> {
     );
   }
 
+  // Convert API category to button
+  Widget _buildCategoryButton(Map<String, dynamic> category) {
+    String name = category["name"] ?? "Unknown";
+    String? imageUrl = category["image_url"];
+
+    IconData defaultIcon = Icons.category;
+
+    return ElevatedButton(
+      onPressed: () {
+        // Navigate based on category name
+        if (name.toLowerCase().contains("packer")) {
+          Navigator.push(context, MaterialPageRoute(builder: (_) => const PackersMoversScreen()));
+        } else if (name.toLowerCase().contains("ac")) {
+          Navigator.push(context, MaterialPageRoute(builder: (_) => const ACServicesScreen()));
+        } else if (name.toLowerCase().contains("clean")) {
+          Navigator.push(context, MaterialPageRoute(builder: (_) => const CleaningServicesScreen()));
+        } else {
+          Navigator.push(context, MaterialPageRoute(builder: (_) => const OtherHomeServiceScreen()));
+        }
+      },
+      style: ElevatedButton.styleFrom(
+        backgroundColor: whiteColor,
+        side: const BorderSide(color: mediumBlue, width: 2),
+        minimumSize: const Size(double.infinity, 60),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          imageUrl != null && imageUrl.isNotEmpty
+              ? Image.network(imageUrl, height: 28, width: 28, errorBuilder: (c, e, s) {
+            return Icon(defaultIcon, color: mediumBlue, size: 28);
+          })
+              : Icon(defaultIcon, color: mediumBlue, size: 28),
+          const SizedBox(height: 5),
+          Text(
+            name,
+            style: const TextStyle(
+              color: darkBlue,
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -163,7 +241,7 @@ class _HomeServiceViewState extends State<HomeServiceView> {
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  'Hi, ${widget.userData?.customerName ?? 'User'}', // Dynamic name
+                  'Hi, ${widget.userData?.customerName ?? 'User'}',
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -190,44 +268,22 @@ class _HomeServiceViewState extends State<HomeServiceView> {
               ),
             ),
             const SizedBox(height: 20),
-            GridView.count(
-              crossAxisCount: 2,
-              padding: const EdgeInsets.all(16.0),
-              crossAxisSpacing: 10,
-              mainAxisSpacing: 10,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              childAspectRatio: 2.0,
-              children: [
-                _buildButton('Packers & Movers', Icons.local_shipping, onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const PackersMoversScreen()),
-                  );
-                }),
-                _buildButton('AC Services', Icons.ac_unit, onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const ACServicesScreen()),
-                  );
-                }),
-                _buildButton('Cleaning Services', Icons.cleaning_services, onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const CleaningServicesScreen()),
-                  );
-                }),
-                _buildButton('Other Home Service', Icons.home_repair_service, onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const OtherHomeServiceScreen()),
-                  );
-                }),
-                _buildButton('My Request', Icons.check_circle, onTap: _navigateToMyRequest),
-                _buildButton('Call Us', Icons.call, onTap: _makePhoneCall),
-              ],
+            isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : Expanded(
+              child: GridView.count(
+                crossAxisCount: 2,
+                padding: const EdgeInsets.all(16.0),
+                crossAxisSpacing: 10,
+                mainAxisSpacing: 10,
+                childAspectRatio: 2.0,
+                children: [
+                  ...categories.map((cat) => _buildCategoryButton(cat)).toList(),
+                  _buildButton('My Request', Icons.check_circle, onTap: _navigateToMyRequest),
+                  _buildButton('Call Us', Icons.call, onTap: _makePhoneCall),
+                ],
+              ),
             ),
-            const Spacer(),
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: ElevatedButton(
