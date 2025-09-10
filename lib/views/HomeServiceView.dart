@@ -3,12 +3,9 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
-import 'package:new_packers_application/views/PackersMoversScreen.dart';
-import 'package:new_packers_application/views/ACServicesScreen.dart';
-import 'package:new_packers_application/views/CleaningServicesScreen.dart';
-import 'package:new_packers_application/views/OtherHomeServiceScreen.dart';
 import '../lib/views/MyRequestScreen.dart';
 import '../models/UserData.dart';
+import 'SubCategoryScreen.dart';
 
 const Color darkBlue = Color(0xFF03669d);
 const Color mediumBlue = Color(0xFF37b3e7);
@@ -39,7 +36,7 @@ class _HomeServiceViewState extends State<HomeServiceView> {
     _fetchCategories();
     _fetchBanners();
 
-    // Auto-slide banner every 3 seconds
+// Auto-slide banner every 3 seconds
     Timer.periodic(const Duration(seconds: 3), (Timer timer) {
       if (mounted && bannerImages.isNotEmpty) {
         setState(() {
@@ -54,7 +51,7 @@ class _HomeServiceViewState extends State<HomeServiceView> {
     });
   }
 
-  // Fetch categories from API
+// Fetch categories from API
   Future<void> _fetchCategories() async {
     try {
       final response =
@@ -74,7 +71,7 @@ class _HomeServiceViewState extends State<HomeServiceView> {
     }
   }
 
-  // Fetch banners from API
+// Fetch banners from API
   Future<void> _fetchBanners() async {
     try {
       final response =
@@ -90,7 +87,7 @@ class _HomeServiceViewState extends State<HomeServiceView> {
           "https://54kidsstreet.org/uploads/banner/${b["image"]}")
               .toList();
 
-          // fallback to assets if no banners
+// fallback to assets if no banners
           if (bannerImages.isEmpty) {
             _useFallbackBanners();
           }
@@ -122,7 +119,7 @@ class _HomeServiceViewState extends State<HomeServiceView> {
     super.dispose();
   }
 
-  // Navigation for My Request
+// Navigation for My Request
   void _navigateToMyRequest() {
     Navigator.push(
       context,
@@ -130,7 +127,7 @@ class _HomeServiceViewState extends State<HomeServiceView> {
     );
   }
 
-  // Open WhatsApp
+// Open WhatsApp
   void _openWhatsApp() async {
     final String phoneNumber = '919022062666';
     final String message = 'Hello from Mumbai Metro Packers & Movers app';
@@ -156,7 +153,7 @@ class _HomeServiceViewState extends State<HomeServiceView> {
     }
   }
 
-  // Make phone call
+// Make phone call
   void _makePhoneCall() async {
     final Uri phoneUri = Uri(scheme: 'tel', path: '8888888888');
     if (await canLaunchUrl(phoneUri)) {
@@ -168,7 +165,7 @@ class _HomeServiceViewState extends State<HomeServiceView> {
     }
   }
 
-  // Build button for constant actions
+// Build button for constant actions
   Widget _buildButton(String title, IconData icon, {VoidCallback? onTap}) {
     return ElevatedButton(
       onPressed: onTap ?? () {},
@@ -199,7 +196,7 @@ class _HomeServiceViewState extends State<HomeServiceView> {
     );
   }
 
-  // Build category button dynamically
+// Build category button dynamically
   Widget _buildCategoryButton(Map<String, dynamic> category) {
     String name = category["name"] ?? "Unknown";
     String? imageUrl = category["image_url"];
@@ -207,19 +204,15 @@ class _HomeServiceViewState extends State<HomeServiceView> {
 
     return ElevatedButton(
       onPressed: () {
-        if (name.toLowerCase().contains("packer")) {
-          Navigator.push(context,
-              MaterialPageRoute(builder: (_) => const PackersMoversScreen()));
-        } else if (name.toLowerCase().contains("ac")) {
-          Navigator.push(
-              context, MaterialPageRoute(builder: (_) => const ACServicesScreen()));
-        } else if (name.toLowerCase().contains("clean")) {
-          Navigator.push(context,
-              MaterialPageRoute(builder: (_) => const CleaningServicesScreen()));
-        } else {
-          Navigator.push(context,
-              MaterialPageRoute(builder: (_) => const OtherHomeServiceScreen()));
-        }
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => SubCategoryScreen(
+              categoryId: category["id"],
+              categoryName: name,
+            ),
+          ),
+        );
       },
       style: ElevatedButton.styleFrom(
         backgroundColor: whiteColor,
@@ -234,7 +227,7 @@ class _HomeServiceViewState extends State<HomeServiceView> {
         children: [
           imageUrl != null && imageUrl.isNotEmpty
               ? FadeInImage.assetNetwork(
-            placeholder: 'assets/parcelwala4.jpg', // fallback asset
+            placeholder: 'assets/parcelwala4.jpg',
             image: imageUrl,
             height: 28,
             width: 28,
@@ -379,3 +372,5 @@ class _HomeServiceViewState extends State<HomeServiceView> {
     );
   }
 }
+
+
