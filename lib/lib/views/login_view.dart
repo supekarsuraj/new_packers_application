@@ -3,49 +3,44 @@ import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-import '../../models/UserData.dart';
-import '../../views/HomeServiceView.dart';
+import '../../views/OTPScreen.dart';
 import '../../views/signupOtpView.dart';
 import '../viewmodels/login_viewmodel.dart';
 
-class LoginView extends StatefulWidget {
+class LoginView extends StatelessWidget {
   const LoginView({super.key});
 
-  @override
-  State<LoginView> createState() => _LoginViewState();
-}
-
-class _LoginViewState extends State<LoginView> {
-  final TextEditingController _mobileController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
-
   static const Color darkBlue = Color(0xFF03669d);
+  static const Color mediumBlue = Color(0xFF37b3e7);
+  static const Color lightBlue = Color(0xFF7ed2f7);
+  static const Color whiteColor = Color(0xFFf7f7f7);
 
-  /// Login API: returns UserData if login succeeds, null otherwise
-  Future<UserData?> loginUserAndGetDetails(
-      String mobile, String password) async {
+  // Function to send OTP
+  Future<bool> sendOTP(String mobileNumber) async {
     try {
-      final url =
-          "http://54kidsstreet.org/api/customers/login?mobile_no=$mobile&password=$password";
+      String baseUrl = 'http://54kidsstreet.org'; // Domain
+      final url = '$baseUrl/api/customers/$mobileNumber/otp';
+      print('Sending OTP to: $url');
 
-      final response = await http.post(Uri.parse(url));
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      );
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        if (data is Map &&
-            (data['status'] == true ||
-                data['success'] == true ||
-                (data['message']?.toString().toLowerCase().contains('success') ??
-                    false))) {
-          if (data.containsKey('data')) {
-            final userMap = data['data'] as Map<String, dynamic>;
-            return UserData.fromMap(userMap);
-          }
-        }
+      print('Send OTP Response Status: ${response.statusCode}');
+      print('Send OTP Response Body: ${response.body}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return true;
+      } else {
+        return false;
       }
-      return null;
     } catch (e) {
-      return null;
+      print('Error sending OTP: $e');
+      return false;
     }
   }
 
@@ -61,124 +56,107 @@ class _LoginViewState extends State<LoginView> {
               backgroundColor: darkBlue,
               foregroundColor: Colors.white,
             ),
-            body: SingleChildScrollView(
+            body: Padding(
               padding: const EdgeInsets.all(16.0),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  minHeight: MediaQuery.of(context).size.height -
-                      MediaQuery.of(context).padding.top -
-                      kToolbarHeight,
-                ),
-                child: IntrinsicHeight(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Image.asset(
-                        'assets/applogo.jpeg',
-                        height: 150,
-                      ),
-                      const SizedBox(height: 20),
-
-                      // Mobile Number Field
-                      TextField(
-                        controller: _mobileController,
-                        keyboardType: TextInputType.phone,
-                        maxLength: 10,
-                        decoration: const InputDecoration(
-                          labelText: 'Mobile Number',
-                          counterText: '',
-                          border: OutlineInputBorder(),
-                        ),
-                        onChanged: (value) {
-                          viewModel.setMobileNumber(value);
-                        },
-                      ),
-                      const SizedBox(height: 20),
-
-                      // Password Field
-                      TextField(
-                        controller: _passwordController,
-                        obscureText: true,
-                        decoration: const InputDecoration(
-                          labelText: 'Password',
-                          border: OutlineInputBorder(),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Image.asset(
+                    'assets/applogo.jpeg',
+                    height: 150,
+                  ),
+                  const SizedBox(height: 20),
+                  TextField(
+                    keyboardType: TextInputType.phone,
+                    maxLength: 10,
+                    decoration: InputDecoration(
+                      labelText: 'Mobile Number',
+                      counterText: '',
+                      prefixIcon: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: const [
+                            Text('🇮🇳', style: TextStyle(fontSize: 20)),
+                            SizedBox(width: 6),
+                            Text('+91',
+                                style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500)),
+                          ],
                         ),
                       ),
-                      const SizedBox(height: 20),
-
-                      // Login Button
-                      ElevatedButton(
-                        onPressed: viewModel.isLoading
-                            ? null
-                            : () async {
-                          if (_mobileController.text.length == 10 &&
-                              _passwordController.text.isNotEmpty) {
-                            viewModel.setLoading(true);
-
-                            final userData =
-                            await loginUserAndGetDetails(
-                              _mobileController.text,
-                              _passwordController.text,
-                            );
-
-                            viewModel.setLoading(false);
-
-                            if (userData != null) {
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      HomeServiceView(userData: userData),
-                                ),
-                              );
-                            } else {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                      'Invalid mobile number or password'),
-                                  backgroundColor: Colors.red,
-                                ),
-                              );
-                            }
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                    'Please enter valid mobile number and password'),
-                                backgroundColor: Colors.red,
-                              ),
-                            );
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: darkBlue,
-                          minimumSize: const Size(double.infinity, 50),
-                        ),
-                        child: viewModel.isLoading
-                            ? const CircularProgressIndicator(color: Colors.white)
-                            : const Text(
-                          'Login',
-                          style: TextStyle(color: Colors.white),
-                        ),
+                      prefixIconConstraints: const BoxConstraints(
+                        minWidth: 0,
+                        minHeight: 0,
                       ),
-                      const SizedBox(height: 10),
+                      border: const OutlineInputBorder(),
+                    ),
+                    onChanged: (value) {
+                      viewModel.setMobileNumber(value);
+                    },
+                  ),
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: viewModel.isLoading
+                        ? null
+                        : () async {
+                      if (viewModel.mobileNumber.length == 10) {
+                        viewModel.setLoading(true);
+                        bool otpSent = await sendOTP(viewModel.mobileNumber);
+                        viewModel.setLoading(false);
 
-                      // Signup Redirect
-                      TextButton(
-                        onPressed: () {
+                        if (otpSent) {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) =>
-                                  signupOtpView(), // Your signup view
+                              builder: (context) => OTPScreen(
+                                mobileNumber: viewModel.mobileNumber,
+                                source: 1, // from login
+                              ),
                             ),
                           );
-                        },
-                        child: const Text('Create an Account? Signup'),
-                      ),
-                    ],
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Failed to send OTP'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Enter a valid 10-digit number'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: darkBlue,
+                      minimumSize: const Size(double.infinity, 50),
+                    ),
+                    child: viewModel.isLoading
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : const Text(
+                      'Login',
+                      style: TextStyle(color: Colors.white),
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 10),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const signupOtpView(),
+                        ),
+                      );
+                    },
+                    child: const Text("Don't have an account? Signup"),
+                  ),
+                ],
               ),
             ),
           );
