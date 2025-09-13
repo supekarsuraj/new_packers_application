@@ -87,7 +87,6 @@ class _HomeServiceViewState extends State<HomeServiceView> {
           "https://54kidsstreet.org/uploads/banner/${b["image"]}")
               .toList();
 
-// fallback to assets if no banners
           if (bannerImages.isEmpty) {
             _useFallbackBanners();
           }
@@ -119,7 +118,6 @@ class _HomeServiceViewState extends State<HomeServiceView> {
     super.dispose();
   }
 
-// Navigation for My Request
   void _navigateToMyRequest() {
     Navigator.push(
       context,
@@ -127,7 +125,6 @@ class _HomeServiceViewState extends State<HomeServiceView> {
     );
   }
 
-// Open WhatsApp
   void _openWhatsApp() async {
     final String phoneNumber = '919022062666';
     final String message = 'Hello from Mumbai Metro Packers & Movers app';
