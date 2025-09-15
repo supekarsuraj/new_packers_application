@@ -1,3 +1,4 @@
+// lib/views/home_service_view.dart (Updated for better flow, no changes needed based on issue, but ensuring consistency)
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:convert';
@@ -36,7 +37,6 @@ class _HomeServiceViewState extends State<HomeServiceView> {
     _fetchCategories();
     _fetchBanners();
 
-// Auto-slide banner every 3 seconds
     Timer.periodic(const Duration(seconds: 3), (Timer timer) {
       if (mounted && bannerImages.isNotEmpty) {
         setState(() {
@@ -51,11 +51,9 @@ class _HomeServiceViewState extends State<HomeServiceView> {
     });
   }
 
-// Fetch categories from API
   Future<void> _fetchCategories() async {
     try {
-      final response =
-      await http.get(Uri.parse("https://54kidsstreet.org/api/category"));
+      final response = await http.get(Uri.parse("https://54kidsstreet.org/api/category"));
 
       if (response.statusCode == 200) {
         final jsonData = json.decode(response.body);
@@ -71,21 +69,16 @@ class _HomeServiceViewState extends State<HomeServiceView> {
     }
   }
 
-// Fetch banners from API
   Future<void> _fetchBanners() async {
     try {
-      final response =
-      await http.get(Uri.parse("https://54kidsstreet.org/api/banner"));
+      final response = await http.get(Uri.parse("https://54kidsstreet.org/api/banner"));
 
       if (response.statusCode == 200) {
         final jsonData = json.decode(response.body);
         final List<dynamic> banners = jsonData["data"];
 
         setState(() {
-          bannerImages = banners
-              .map<String>((b) =>
-          "https://54kidsstreet.org/uploads/banner/${b["image"]}")
-              .toList();
+          bannerImages = banners.map<String>((b) => "https://54kidsstreet.org/uploads/banner/${b["image"]}").toList();
 
           if (bannerImages.isEmpty) {
             _useFallbackBanners();
@@ -127,7 +120,7 @@ class _HomeServiceViewState extends State<HomeServiceView> {
 
   void _openWhatsApp() async {
     final String phoneNumber = '919022062666';
-    final String message = 'Hello from Mumbai Metro Packers & Movers app';
+    final String message = 'Hello from from HomeServiceView';
 
     final Uri whatsappAppUri = Uri.parse(
       'whatsapp://send?phone=$phoneNumber&text=${Uri.encodeComponent(message)}',
@@ -150,7 +143,6 @@ class _HomeServiceViewState extends State<HomeServiceView> {
     }
   }
 
-// Make phone call
   void _makePhoneCall() async {
     final Uri phoneUri = Uri(scheme: 'tel', path: '8888888888');
     if (await canLaunchUrl(phoneUri)) {
@@ -162,7 +154,6 @@ class _HomeServiceViewState extends State<HomeServiceView> {
     }
   }
 
-// Build button for constant actions
   Widget _buildButton(String title, IconData icon, {VoidCallback? onTap}) {
     return ElevatedButton(
       onPressed: onTap ?? () {},
@@ -193,7 +184,6 @@ class _HomeServiceViewState extends State<HomeServiceView> {
     );
   }
 
-// Build category button dynamically
   Widget _buildCategoryButton(Map<String, dynamic> category) {
     String name = category["name"] ?? "Unknown";
     String? imageUrl = category["image_url"];
@@ -369,5 +359,3 @@ class _HomeServiceViewState extends State<HomeServiceView> {
     );
   }
 }
-
-

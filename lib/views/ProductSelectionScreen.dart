@@ -127,14 +127,6 @@ class _ProductSelectionScreenState extends State<ProductSelectionScreen> {
         if (existingProduct.count == 0) {
           selectedProducts.remove(existingProduct);
         }
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Count cannot go below 0'),
-            backgroundColor: darkBlue,
-            duration: Duration(seconds: 2),
-          ),
-        );
       }
     });
   }
@@ -169,7 +161,9 @@ class _ProductSelectionScreenState extends State<ProductSelectionScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: whiteColor),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            Navigator.pop(context, getTotalProductCount()); // Return total count on back
+          },
         ),
       ),
       body: Column(
@@ -274,13 +268,8 @@ class _ProductSelectionScreenState extends State<ProductSelectionScreen> {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () {
-                  if (selectedProducts.isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Please select at least one product'),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
+                  if (getTotalProductCount() == 0) {
+                    // Do nothing if no products selected
                     return;
                   }
                   // Create ShiftData instance
@@ -291,12 +280,11 @@ class _ProductSelectionScreenState extends State<ProductSelectionScreen> {
                     selectedTime: widget.selectedTime,
                     selectedProducts: List.from(selectedProducts),
                   );
-                  // Navigate to LocationSelectionScreen with ShiftData
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => LocationSelectionScreen(
-                        shiftData: shiftData, // Pass ShiftData instead of individual params
+                        shiftData: shiftData,
                       ),
                     ),
                   );
@@ -308,9 +296,9 @@ class _ProductSelectionScreenState extends State<ProductSelectionScreen> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                child: Text(
-                  'Next (Total: ${getTotalProductCount()})',
-                  style: const TextStyle(
+                child: const Text(
+                  'Next',
+                  style: TextStyle(
                     color: whiteColor,
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
