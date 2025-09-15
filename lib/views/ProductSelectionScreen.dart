@@ -272,22 +272,9 @@ class _ProductSelectionScreenState extends State<ProductSelectionScreen> {
                     // Do nothing if no products selected
                     return;
                   }
-                  // Create ShiftData instance
-                  final shiftData = ShiftData(
-                    serviceId: widget.serviceId,
-                    serviceName: widget.serviceName,
-                    selectedDate: widget.selectedDate,
-                    selectedTime: widget.selectedTime,
-                    selectedProducts: List.from(selectedProducts),
-                  );
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => LocationSelectionScreen(
-                        shiftData: shiftData,
-                      ),
-                    ),
-                  );
+                  // Instead of going to LocationSelectionScreen directly,
+                  // return the total count to ServiceSelectionScreen
+                  Navigator.pop(context, getTotalProductCount());
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: darkBlue,
@@ -305,6 +292,7 @@ class _ProductSelectionScreenState extends State<ProductSelectionScreen> {
                   ),
                 ),
               ),
+
             ),
           ),
         ],
