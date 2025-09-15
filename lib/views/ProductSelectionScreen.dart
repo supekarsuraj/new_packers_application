@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import '../lib/views/location_selection_screen.dart';
 import '../models/ShiftData.dart';
 import 'SelectedProduct.dart';
 
@@ -15,6 +14,7 @@ class ProductSelectionScreen extends StatefulWidget {
   final String serviceName;
   final String selectedDate;
   final String selectedTime;
+  final List<SelectedProduct> initialSelectedProducts;
 
   const ProductSelectionScreen({
     super.key,
@@ -22,6 +22,7 @@ class ProductSelectionScreen extends StatefulWidget {
     required this.serviceName,
     required this.selectedDate,
     required this.selectedTime,
+    this.initialSelectedProducts = const [],
   });
 
   @override
@@ -61,6 +62,9 @@ class _ProductSelectionScreenState extends State<ProductSelectionScreen> {
   void initState() {
     super.initState();
     _fetchProducts();
+    // Restore previously selected products
+    selectedProducts.addAll(widget.initialSelectedProducts.map((p) =>
+        SelectedProduct(productName: p.productName, count: p.count)));
   }
 
   Future<void> _fetchProducts() async {
@@ -106,7 +110,7 @@ class _ProductSelectionScreenState extends State<ProductSelectionScreen> {
     setState(() {
       final existingProduct = selectedProducts.firstWhere(
             (p) => p.productName == productName,
-        orElse: () => SelectedProduct(productName: productName),
+        orElse: () => SelectedProduct(productName: productName, count: 0),
       );
       if (selectedProducts.contains(existingProduct)) {
         existingProduct.count++;
@@ -125,7 +129,7 @@ class _ProductSelectionScreenState extends State<ProductSelectionScreen> {
       if (existingProduct.count > 0) {
         existingProduct.count--;
         if (existingProduct.count == 0) {
-          selectedProducts.remove(existingProduct);
+          selectedProducts.removeWhere((p) => p.productName == productName);
         }
       }
     });
@@ -137,10 +141,6 @@ class _ProductSelectionScreenState extends State<ProductSelectionScreen> {
       orElse: () => SelectedProduct(productName: productName, count: 0),
     );
     return existingProduct.count;
-  }
-
-  int getTotalProductCount() {
-    return selectedProducts.fold(0, (sum, product) => sum + product.count);
   }
 
   @override
@@ -162,7 +162,7 @@ class _ProductSelectionScreenState extends State<ProductSelectionScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: whiteColor),
           onPressed: () {
-            Navigator.pop(context, getTotalProductCount()); // Return total count on back
+            Navigator.pop(context, selectedProducts);
           },
         ),
       ),
@@ -212,11 +212,7 @@ class _ProductSelectionScreenState extends State<ProductSelectionScreen> {
                                 shape: BoxShape.circle,
                                 border: Border.all(color: lightBlue, width: 2),
                               ),
-                              child: const Icon(
-                                Icons.remove,
-                                color: lightBlue,
-                                size: 20,
-                              ),
+                              child: const Icon(Icons.remove, color: lightBlue, size: 20),
                             ),
                           ),
                           const SizedBox(width: 16),
@@ -247,11 +243,7 @@ class _ProductSelectionScreenState extends State<ProductSelectionScreen> {
                                 shape: BoxShape.circle,
                                 border: Border.all(color: lightBlue, width: 2),
                               ),
-                              child: const Icon(
-                                Icons.add,
-                                color: lightBlue,
-                                size: 20,
-                              ),
+                              child: const Icon(Icons.add, color: lightBlue, size: 20),
                             ),
                           ),
                         ],
@@ -268,13 +260,7 @@ class _ProductSelectionScreenState extends State<ProductSelectionScreen> {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () {
-                  if (getTotalProductCount() == 0) {
-                    // Do nothing if no products selected
-                    return;
-                  }
-                  // Instead of going to LocationSelectionScreen directly,
-                  // return the total count to ServiceSelectionScreen
-                  Navigator.pop(context, getTotalProductCount());
+                  Navigator.pop(context, selectedProducts);
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: darkBlue,
@@ -292,7 +278,6 @@ class _ProductSelectionScreenState extends State<ProductSelectionScreen> {
                   ),
                 ),
               ),
-
             ),
           ),
         ],

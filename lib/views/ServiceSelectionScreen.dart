@@ -5,6 +5,7 @@ import 'dart:convert';
 import '../lib/views/location_selection_screen.dart';
 import '../models/ShiftData.dart';
 import 'ProductSelectionScreen.dart';
+import 'SelectedProduct.dart';
 
 const Color darkBlue = Color(0xFF03669d);
 const Color mediumBlue = Color(0xFF37b3e7);
@@ -59,7 +60,10 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
     '01:00 PM',
     '02:00 PM'
   ];
-  Map<int, int> serviceProductCounts = {}; // Track product counts per service ID
+
+  // Map of serviceId -> selected products
+  Map<int, List<SelectedProduct>> serviceSelectedProducts = {};
+  Map<int, int> serviceProductCounts = {};
 
   @override
   void initState() {
@@ -134,9 +138,11 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
     }
   }
 
-  void _updateServiceCount(int serviceId, int count) {
+  void _updateServiceCount(int serviceId, List<SelectedProduct> products) {
+    serviceSelectedProducts[serviceId] = products;
     setState(() {
-      serviceProductCounts[serviceId] = count;
+      serviceProductCounts[serviceId] =
+          products.fold(0, (sum, p) => sum + p.count);
     });
   }
 
@@ -223,7 +229,7 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 24), // ✅ fixed
+            const SizedBox(height: 24),
             const Text(
               'Select Services',
               style: TextStyle(
@@ -232,28 +238,21 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
                 fontFamily: 'Poppins',
               ),
             ),
-            const SizedBox(height: 16), // ✅ fixed
+            const SizedBox(height: 16),
             Expanded(
               child: isLoading
-                  ? const Center(
-                  child: CircularProgressIndicator(color: darkBlue))
+                  ? const Center(child: CircularProgressIndicator(color: darkBlue))
                   : errorMessage != null
-                  ? Center(
-                  child: Text(errorMessage!,
-                      style: const TextStyle(color: darkBlue)))
+                  ? Center(child: Text(errorMessage!, style: const TextStyle(color: darkBlue)))
                   : services.isEmpty
-                  ? const Center(
-                  child: Text('No services available',
-                      style: TextStyle(color: darkBlue)))
+                  ? const Center(child: Text('No services available', style: TextStyle(color: darkBlue)))
                   : ListView.builder(
                 itemCount: services.length,
                 itemBuilder: (context, index) {
                   final service = services[index];
-                  final count =
-                      serviceProductCounts[service.id] ?? 0;
+                  final count = serviceProductCounts[service.id] ?? 0;
                   return Padding(
-                    padding:
-                    const EdgeInsets.only(bottom: 12.0),
+                    padding: const EdgeInsets.only(bottom: 12.0),
                     child: Stack(
                       children: [
                         SizedBox(
@@ -276,18 +275,19 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
                                     serviceName: service.serviceName,
                                     selectedDate: selectedDate,
                                     selectedTime: selectedTime,
+                                    initialSelectedProducts: serviceSelectedProducts[service.id] ?? [],
                                   ),
                                 ),
                               );
-                              if (result is int && result > 0) {
+                              if (result is List<SelectedProduct>) {
                                 _updateServiceCount(service.id, result);
                               }
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: mediumBlue,
-                              minimumSize: const Size(double.infinity, 55), // full width + height
+                              minimumSize: const Size(double.infinity, 55),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12), // rounded look
+                                borderRadius: BorderRadius.circular(12),
                               ),
                             ),
                             child: Text(
@@ -322,40 +322,35 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
                           ),
                       ],
                     ),
-
                   );
                 },
               ),
             ),
-            const SizedBox(height: 16), // ✅ fixed
+            const SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () {
-                  if (serviceProductCounts.values
-                      .every((count) => count == 0)) {
+                  if (serviceProductCounts.values.every((count) => count == 0)) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text(
-                            'Please select products for at least one service'),
+                        content: Text('Please select products for at least one service'),
                         backgroundColor: Colors.red,
                       ),
                     );
                     return;
                   }
-                  // Proceed to next screen (e.g., LocationSelectionScreen)
                   final shiftData = ShiftData(
                     serviceId: 0,
                     serviceName: 'Multiple Services',
                     selectedDate: selectedDate,
                     selectedTime: selectedTime,
-                    selectedProducts: [],
+                    selectedProducts: serviceSelectedProducts.values.expand((list) => list).toList(),
                   );
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) =>
-                          LocationSelectionScreen(shiftData: shiftData),
+                      builder: (context) => LocationSelectionScreen(shiftData: shiftData),
                     ),
                   );
                 },
