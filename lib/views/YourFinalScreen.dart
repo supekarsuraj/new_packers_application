@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../models/ShiftData.dart';
 
 class YourFinalScreen extends StatelessWidget {
@@ -13,41 +12,56 @@ class YourFinalScreen extends StatelessWidget {
       appBar: AppBar(title: const Text('Confirmation')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: ListView(
           children: [
-            Text('Service: ${shiftData.serviceName}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            Text('Date: ${shiftData.selectedDate}'),
-            Text('Time: ${shiftData.selectedTime}'),
-            Text('Total Products: ${shiftData.getTotalProductCount()}'),
+            _buildInfoCard("Service", shiftData.serviceName),
+            _buildInfoCard("Date", shiftData.selectedDate),
+            _buildInfoCard("Time", shiftData.selectedTime),
+            _buildInfoCard("Total Products",
+                shiftData.getTotalProductCount().toString()),
             const SizedBox(height: 16),
-            const Text('Selected Products:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-            ...shiftData.selectedProducts.map((product) => Text('${product.productName}: ${product.count}')).toList(),
+            const Text("Selected Products:",
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            ...shiftData.selectedProducts
+                .map((p) => Text("${p.productName}: ${p.count}")),
             const SizedBox(height: 16),
-            const Text('Source Location:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-            Text('Coordinates: ${shiftData.sourceCoordinates?.latitude}, ${shiftData.sourceCoordinates?.longitude}'),
-            Text('Floor: ${shiftData.floorSource}'),
-            Text('Normal Lift: ${shiftData.normalLiftSource}'),
-            Text('Service Lift: ${shiftData.serviceLiftSource}'),
-            const SizedBox(height: 16),
-            const Text('Destination Location:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-            Text('Coordinates: ${shiftData.destinationCoordinates?.latitude}, ${shiftData.destinationCoordinates?.longitude}'),
-            Text('Floor: ${shiftData.floorDestination}'),
-            Text('Normal Lift: ${shiftData.normalLiftDestination}'),
-            Text('Service Lift: ${shiftData.serviceLiftDestination}'),
-            const SizedBox(height: 16),
+            _buildInfoCard("Source",
+                shiftData.sourceAddress ?? "${shiftData.sourceCoordinates}"),
+            _buildInfoCard("Destination",
+                shiftData.destinationAddress ?? "${shiftData.destinationCoordinates}"),
+            _buildInfoCard("Source Floor", shiftData.floorSource.toString()),
+            _buildInfoCard("Destination Floor",
+                shiftData.floorDestination.toString()),
+            _buildInfoCard("Normal Lift Source",
+                shiftData.normalLiftSource ? "Yes" : "No"),
+            _buildInfoCard("Service Lift Source",
+                shiftData.serviceLiftSource ? "Yes" : "No"),
+            _buildInfoCard("Normal Lift Destination",
+                shiftData.normalLiftDestination ? "Yes" : "No"),
+            _buildInfoCard("Service Lift Destination",
+                shiftData.serviceLiftDestination ? "Yes" : "No"),
+            const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
-                // Add submission logic here (e.g., API call)
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Order submitted!')),
                 );
-                Navigator.pop(context); // Return to previous screen
+                Navigator.pop(context);
               },
-              child: const Text('Submit'),
+              child: const Text("Submit"),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildInfoCard(String title, String value) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: ListTile(
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+        subtitle: Text(value),
       ),
     );
   }

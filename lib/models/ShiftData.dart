@@ -1,5 +1,4 @@
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-
 import '../views/SelectedProduct.dart';
 
 class ShiftData {
@@ -10,6 +9,8 @@ class ShiftData {
   final List<SelectedProduct> selectedProducts;
   LatLng? sourceCoordinates;
   LatLng? destinationCoordinates;
+  String? sourceAddress;        // ✅ new
+  String? destinationAddress;   // ✅ new
   int floorSource;
   int floorDestination;
   bool normalLiftSource;
@@ -25,13 +26,16 @@ class ShiftData {
     required this.selectedProducts,
     this.sourceCoordinates,
     this.destinationCoordinates,
+    this.sourceAddress,          // ✅ new
+    this.destinationAddress,     // ✅ new
     this.floorSource = 0,
     this.floorDestination = 0,
     this.normalLiftSource = false,
     this.serviceLiftSource = false,
     this.normalLiftDestination = false,
     this.serviceLiftDestination = false,
-  });// Method to get total product count
+  });
+
   int getTotalProductCount() {
     return selectedProducts.fold(0, (sum, product) => sum + product.count);
   }
