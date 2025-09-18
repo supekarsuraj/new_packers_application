@@ -224,6 +224,7 @@ class _ServiceFormScreenState extends State<ServiceFormScreen> {
   final _formKey = GlobalKey<FormState>();
   final _serviceDescriptionController = TextEditingController();
   final _serviceLocationController = TextEditingController();
+  final _flatNumberController = TextEditingController(); // Added for flat number
   DateTime? _selectedDate;
   LatLng? _selectedLocation; // Store LatLng for potential API submission
 
@@ -275,7 +276,8 @@ class _ServiceFormScreenState extends State<ServiceFormScreen> {
     if (_formKey.currentState!.validate() && _selectedDate != null) {
       // Here you can handle the form submission, e.g., send data to an API
       // Include widget.subCategoryName, _serviceDescriptionController.text,
-      // _serviceLocationController.text, _selectedDate, and _selectedLocation (LatLng) if needed
+      // _serviceLocationController.text, _flatNumberController.text,
+      // _selectedDate, and _selectedLocation (LatLng) if needed
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Form submitted successfully!')),
       );
@@ -294,6 +296,7 @@ class _ServiceFormScreenState extends State<ServiceFormScreen> {
   void dispose() {
     _serviceDescriptionController.dispose();
     _serviceLocationController.dispose();
+    _flatNumberController.dispose(); // Added for flat number
     super.dispose();
   }
 
@@ -402,6 +405,27 @@ class _ServiceFormScreenState extends State<ServiceFormScreen> {
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Please select a service location';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _flatNumberController,
+                  decoration: InputDecoration(
+                    labelText: 'Flat Number',
+                    labelStyle: const TextStyle(color: darkBlue),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: const BorderSide(color: mediumBlue),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter the flat number';
                     }
                     return null;
                   },
