@@ -1,12 +1,12 @@
+// lib/views/home_service_view.dart (Updated for better flow, no changes needed based on issue, but ensuring consistency)
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
-import 'package:new_packers_application/views/PackersMoversScreen.dart';
-import 'package:new_packers_application/views/ACServicesScreen.dart';
-import 'package:new_packers_application/views/CleaningServicesScreen.dart';
-import 'package:new_packers_application/views/OtherHomeServiceScreen.dart';
 import '../lib/views/MyRequestScreen.dart';
 import '../models/UserData.dart';
+import 'SubCategoryScreen.dart';
 
 const Color darkBlue = Color(0xFF03669d);
 const Color mediumBlue = Color(0xFF37b3e7);
@@ -14,7 +14,7 @@ const Color lightBlue = Color(0xFF7ed2f7);
 const Color whiteColor = Color(0xFFf7f7f7);
 
 class HomeServiceView extends StatefulWidget {
-  final UserData? userData; // Optional UserData to handle dynamic name
+  final UserData? userData;
 
   const HomeServiceView({super.key, this.userData});
 
@@ -23,23 +23,24 @@ class HomeServiceView extends StatefulWidget {
 }
 
 class _HomeServiceViewState extends State<HomeServiceView> {
-  final List<String> images = [
-    'assets/parcelwala4.jpg',
-    'assets/parcelwala5.jpg',
-    'assets/parcelwala6.jpg',
-    'assets/parcelwala7.jpg',
-  ];
-
   int currentIndex = 0;
   final PageController _pageController = PageController(initialPage: 0);
+
+  List<dynamic> categories = [];
+  List<String> bannerImages = [];
+  bool isLoadingCategories = true;
+  bool isLoadingBanners = true;
 
   @override
   void initState() {
     super.initState();
+    _fetchCategories();
+    _fetchBanners();
+
     Timer.periodic(const Duration(seconds: 3), (Timer timer) {
-      if (mounted) {
+      if (mounted && bannerImages.isNotEmpty) {
         setState(() {
-          currentIndex = (currentIndex + 1) % images.length;
+          currentIndex = (currentIndex + 1) % bannerImages.length;
           _pageController.animateToPage(
             currentIndex,
             duration: const Duration(milliseconds: 300),
@@ -47,6 +48,60 @@ class _HomeServiceViewState extends State<HomeServiceView> {
           );
         });
       }
+    });
+  }
+
+  Future<void> _fetchCategories() async {
+    try {
+      final response = await http.get(Uri.parse("https://54kidsstreet.org/api/category"));
+
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body);
+        setState(() {
+          categories = jsonData["data"];
+          isLoadingCategories = false;
+        });
+      } else {
+        setState(() => isLoadingCategories = false);
+      }
+    } catch (e) {
+      setState(() => isLoadingCategories = false);
+    }
+  }
+
+  Future<void> _fetchBanners() async {
+    try {
+      final response = await http.get(Uri.parse("https://54kidsstreet.org/api/banner"));
+
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body);
+        final List<dynamic> banners = jsonData["data"];
+
+        setState(() {
+          bannerImages = banners.map<String>((b) => "https://54kidsstreet.org/uploads/banner/${b["image"]}").toList();
+
+          if (bannerImages.isEmpty) {
+            _useFallbackBanners();
+          }
+          isLoadingBanners = false;
+        });
+      } else {
+        _useFallbackBanners();
+      }
+    } catch (e) {
+      _useFallbackBanners();
+    }
+  }
+
+  void _useFallbackBanners() {
+    setState(() {
+      bannerImages = [
+        'assets/parcelwala4.jpg',
+        'assets/parcelwala5.jpg',
+        'assets/parcelwala6.jpg',
+        'assets/parcelwala7.jpg',
+      ];
+      isLoadingBanners = false;
     });
   }
 
@@ -65,7 +120,7 @@ class _HomeServiceViewState extends State<HomeServiceView> {
 
   void _openWhatsApp() async {
     final String phoneNumber = '919022062666';
-    final String message = 'Hello from Mumbai Metro Packers & Movers app';
+    final String message = 'Hello from from HomeServiceView';
 
     final Uri whatsappAppUri = Uri.parse(
       'whatsapp://send?phone=$phoneNumber&text=${Uri.encodeComponent(message)}',
@@ -129,6 +184,60 @@ class _HomeServiceViewState extends State<HomeServiceView> {
     );
   }
 
+  Widget _buildCategoryButton(Map<String, dynamic> category) {
+    String name = category["name"] ?? "Unknown";
+    String? imageUrl = category["image_url"];
+    IconData defaultIcon = Icons.category;
+
+    return ElevatedButton(
+      onPressed: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => SubCategoryScreen(
+              categoryId: category["id"],
+              categoryName: name,
+            ),
+          ),
+        );
+      },
+      style: ElevatedButton.styleFrom(
+        backgroundColor: whiteColor,
+        side: const BorderSide(color: mediumBlue, width: 2),
+        minimumSize: const Size(double.infinity, 60),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          imageUrl != null && imageUrl.isNotEmpty
+              ? FadeInImage.assetNetwork(
+            placeholder: 'assets/parcelwala4.jpg',
+            image: imageUrl,
+            height: 28,
+            width: 28,
+            fit: BoxFit.cover,
+            imageErrorBuilder: (c, e, s) =>
+                Icon(defaultIcon, color: mediumBlue, size: 28),
+          )
+              : Icon(defaultIcon, color: mediumBlue, size: 28),
+          const SizedBox(height: 5),
+          Text(
+            name,
+            style: const TextStyle(
+              color: darkBlue,
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -163,7 +272,7 @@ class _HomeServiceViewState extends State<HomeServiceView> {
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  'Hi, ${widget.userData?.customerName ?? 'User'}', // Dynamic name
+                  'Hi, ${widget.userData?.customerName ?? 'User'}',
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -176,58 +285,52 @@ class _HomeServiceViewState extends State<HomeServiceView> {
             Container(
               height: 200,
               color: lightBlue,
-              child: PageView.builder(
+              child: isLoadingBanners
+                  ? const Center(child: CircularProgressIndicator())
+                  : PageView.builder(
                 controller: _pageController,
-                itemCount: images.length,
+                itemCount: bannerImages.length,
                 onPageChanged: (index) {
                   setState(() {
                     currentIndex = index;
                   });
                 },
                 itemBuilder: (context, index) {
-                  return Image.asset(images[index], fit: BoxFit.cover);
+                  final imagePath = bannerImages[index];
+                  return ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: imagePath.endsWith(".webp")
+                        ? FadeInImage.assetNetwork(
+                      placeholder: 'assets/parcelwala4.jpg',
+                      image: imagePath,
+                      fit: BoxFit.cover,
+                      imageErrorBuilder: (c, e, s) =>
+                          Image.asset('assets/parcelwala4.jpg',
+                              fit: BoxFit.cover),
+                    )
+                        : Image.asset(imagePath, fit: BoxFit.cover),
+                  );
                 },
               ),
             ),
             const SizedBox(height: 20),
-            GridView.count(
-              crossAxisCount: 2,
-              padding: const EdgeInsets.all(16.0),
-              crossAxisSpacing: 10,
-              mainAxisSpacing: 10,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              childAspectRatio: 2.0,
-              children: [
-                _buildButton('Packers & Movers', Icons.local_shipping, onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const PackersMoversScreen()),
-                  );
-                }),
-                _buildButton('AC Services', Icons.ac_unit, onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const ACServicesScreen()),
-                  );
-                }),
-                _buildButton('Cleaning Services', Icons.cleaning_services, onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const CleaningServicesScreen()),
-                  );
-                }),
-                _buildButton('Other Home Service', Icons.home_repair_service, onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const OtherHomeServiceScreen()),
-                  );
-                }),
-                _buildButton('My Request', Icons.check_circle, onTap: _navigateToMyRequest),
-                _buildButton('Call Us', Icons.call, onTap: _makePhoneCall),
-              ],
+            isLoadingCategories
+                ? const Center(child: CircularProgressIndicator())
+                : Expanded(
+              child: GridView.count(
+                crossAxisCount: 2,
+                padding: const EdgeInsets.all(16.0),
+                crossAxisSpacing: 10,
+                mainAxisSpacing: 10,
+                childAspectRatio: 2.0,
+                children: [
+                  ...categories.map((cat) => _buildCategoryButton(cat)),
+                  _buildButton('My Request', Icons.check_circle,
+                      onTap: _navigateToMyRequest),
+                  _buildButton('Call Us', Icons.call, onTap: _makePhoneCall),
+                ],
+              ),
             ),
-            const Spacer(),
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: ElevatedButton(

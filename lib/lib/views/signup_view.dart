@@ -25,7 +25,6 @@ class _SignupViewState extends State<SignupView> {
   final _formKey = GlobalKey<FormState>();
   final nameController = TextEditingController();
   final emailController = TextEditingController();
-  final passwordController = TextEditingController();
   final pincodeController = TextEditingController();
   final cityController = TextEditingController();
   String? selectedState;
@@ -60,7 +59,6 @@ class _SignupViewState extends State<SignupView> {
         ..bodyFields = {
           'customer_name': nameController.text.trim(),
           'email': emailController.text.trim(),
-          'password': passwordController.text.trim(),
           'pincode': pincodeController.text.trim(),
           'city': cityController.text.trim(),
           'state': selectedState ?? '',
@@ -137,7 +135,6 @@ class _SignupViewState extends State<SignupView> {
         final userData = UserData(
           customerName: nameController.text.trim(),
           email: emailController.text.trim(),
-          password: passwordController.text.trim(),
           pincode: pincodeController.text.trim(),
           city: cityController.text.trim(),
           state: selectedState ?? '',
@@ -208,19 +205,6 @@ class _SignupViewState extends State<SignupView> {
                     }
                     return null;
                   },
-                ),
-                const SizedBox(height: 10),
-                TextFormField(
-                  controller: passwordController,
-                  decoration: const InputDecoration(
-                    labelText: 'Password*',
-                    border: OutlineInputBorder(),
-                  ),
-                  obscureText: true,
-                  validator: (value) =>
-                  value == null || value.trim().isEmpty || value.length < 6
-                      ? 'Please enter a password (min 6 characters)'
-                      : null,
                 ),
                 const SizedBox(height: 10),
                 TextFormField(

@@ -7,12 +7,6 @@ import 'package:fluttertoast/fluttertoast.dart';
 
 const Color mediumBlue = Color(0xFF37b3e7);
 
-// Also update your LocationSelectionScreen.dart file with this change:
-// Replace all instances of Colors.red with mediumBlue in your LocationSelectionScreen
-// For example:
-// - suffixIcon: const Icon(Icons.location_on, color: mediumBlue),
-// - Icons with color: mediumBlue instead of Colors.red
-
 class MapPickerScreen extends StatefulWidget {
   const MapPickerScreen({super.key});
 
@@ -430,7 +424,7 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
                       ],
                     ),
                     child: IconButton(
-                      icon: const Icon(Icons.my_location, color: Color(0xFF4285F4)),
+                      icon: const Icon(Icons.my_location, color: mediumBlue),
                       onPressed: _getCurrentLocation,
                     ),
                   ),
@@ -567,7 +561,14 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
                                 print("Adding location: $_centerPosition");
                                 print("Address: $_currentAddress");
                               }
-                              Navigator.pop(context, _centerPosition);
+                              String fullAddress = _currentAddress;
+                              if (_detailedAddress.isNotEmpty) {
+                                fullAddress += ", $_detailedAddress";
+                              }
+                              Navigator.pop(context, {
+                                'coordinates': _centerPosition,
+                                'address': fullAddress,
+                              });
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: mediumBlue,

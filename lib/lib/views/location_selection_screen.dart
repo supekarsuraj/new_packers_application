@@ -2,23 +2,31 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import '../../models/ShiftData.dart';
+import '../../views/YourFinalScreen.dart';
 import '../../views/next_button.dart';
 import 'map_picker_screen.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
 const Color whiteColor = Color(0xFFf7f7f7);
 const Color darkBlue = Color(0xFF03669d);
+const Color mediumBlue = Color(0xFF37b3e7);
 
 class LocationSelectionScreen extends StatefulWidget {
-  const LocationSelectionScreen({super.key});
+  final ShiftData shiftData;
+
+  const LocationSelectionScreen({super.key, required this.shiftData});
 
   @override
-  _LocationSelectionScreenState createState() => _LocationSelectionScreenState();
+  _LocationSelectionScreenState createState() =>
+      _LocationSelectionScreenState();
 }
 
 class _LocationSelectionScreenState extends State<LocationSelectionScreen> {
-  final TextEditingController _sourceLocalityController = TextEditingController();
-  final TextEditingController _destinationLocalityController = TextEditingController();
+  final TextEditingController _sourceLocalityController =
+  TextEditingController();
+  final TextEditingController _destinationLocalityController =
+  TextEditingController();
   bool _normalLiftSource = false;
   bool _serviceLiftSource = false;
   int _floorSource = 0;
@@ -26,85 +34,42 @@ class _LocationSelectionScreenState extends State<LocationSelectionScreen> {
   bool _serviceLiftDestination = false;
   int _floorDestination = 0;
 
-  // Store coordinates for selected locations
-  LatLng? _sourceCoordinates;
-  LatLng? _destinationCoordinates;
+  @override
+  void initState() {
+    super.initState();
+    _normalLiftSource = widget.shiftData.normalLiftSource;
+    _serviceLiftSource = widget.shiftData.serviceLiftSource;
+    _floorSource = widget.shiftData.floorSource;
+    _normalLiftDestination = widget.shiftData.normalLiftDestination;
+    _serviceLiftDestination = widget.shiftData.serviceLiftDestination;
+    _floorDestination = widget.shiftData.floorDestination;
+    // Initialize text controllers with existing addresses if available
+    _sourceLocalityController.text = widget.shiftData.sourceAddress ?? '';
+    _destinationLocalityController.text = widget.shiftData.destinationAddress ?? '';
+  }
 
   Future<void> _pickLocation(bool isSource) async {
-    final LatLng? selectedLocation = await Navigator.push(
+    final result = await Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const MapPickerScreen()),
     );
 
-    if (selectedLocation != null) {
-      try {
-        List<Placemark> placemarks = await placemarkFromCoordinates(
-          selectedLocation.latitude,
-          selectedLocation.longitude,
-          localeIdentifier: "en_IN", // Better for Indian addresses
-        );
-
-        if (placemarks.isNotEmpty) {
-          Placemark place = placemarks[0];
-
-          // Create a more readable address format
-          String address = _buildAddressString(place);
-
-          setState(() {
-            if (isSource) {
-              _sourceLocalityController.text = address;
-              _sourceCoordinates = selectedLocation;
-            } else {
-              _destinationLocalityController.text = address;
-              _destinationCoordinates = selectedLocation;
-            }
-          });
-
-          Fluttertoast.showToast(
-            msg: "Location selected successfully",
-            toastLength: Toast.LENGTH_SHORT,
-            gravity: ToastGravity.BOTTOM,
-          );
+    if (result != null && result is Map) {
+      setState(() {
+        if (isSource) {
+          _sourceLocalityController.text = result['address'] ?? 'Unknown location';
+          widget.shiftData.sourceCoordinates = result['coordinates'];
+          widget.shiftData.sourceAddress = result['address'];
         } else {
-          Fluttertoast.showToast(
-            msg: "No address found for this location",
-            toastLength: Toast.LENGTH_SHORT,
-            gravity: ToastGravity.BOTTOM,
-          );
+          _destinationLocalityController.text = result['address'] ?? 'Unknown location';
+          widget.shiftData.destinationCoordinates = result['coordinates'];
+          widget.shiftData.destinationAddress = result['address'];
         }
-      } catch (e) {
-        Fluttertoast.showToast(
-          msg: "Error getting address: ${e.toString()}",
-          toastLength: Toast.LENGTH_SHORT,
-          gravity: ToastGravity.BOTTOM,
-        );
-      }
+      });
+      Fluttertoast.showToast(msg: "Location selected successfully");
+    } else {
+      Fluttertoast.showToast(msg: "No location selected");
     }
-  }
-
-  String _buildAddressString(Placemark place) {
-    List<String> addressComponents = [];
-
-    // Add components in order of preference
-    if (place.name != null && place.name!.isNotEmpty) {
-      addressComponents.add(place.name!);
-    }
-    if (place.subLocality != null && place.subLocality!.isNotEmpty) {
-      addressComponents.add(place.subLocality!);
-    }
-    if (place.locality != null && place.locality!.isNotEmpty) {
-      addressComponents.add(place.locality!);
-    }
-    if (place.postalCode != null && place.postalCode!.isNotEmpty) {
-      addressComponents.add(place.postalCode!);
-    }
-    if (place.administrativeArea != null && place.administrativeArea!.isNotEmpty) {
-      addressComponents.add(place.administrativeArea!);
-    }
-
-    return addressComponents.isNotEmpty
-        ? addressComponents.join(", ")
-        : "Unknown location";
   }
 
   @override
@@ -136,10 +101,24 @@ class _LocationSelectionScreenState extends State<LocationSelectionScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Source',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  Text(
+                    'Total Products: ${widget.shiftData.getTotalProductCount()}',
+                    style: const TextStyle(fontSize: 16, color: darkBlue),
                   ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Selected Date: ${widget.shiftData.selectedDate}',
+                    style: const TextStyle(fontSize: 16, color: darkBlue),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Selected Time: ${widget.shiftData.selectedTime}',
+                    style: const TextStyle(fontSize: 16, color: darkBlue),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text('Source',
+                      style:
+                      TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
                   const Text('Locality'),
                   const SizedBox(height: 4),
@@ -155,7 +134,8 @@ class _LocationSelectionScreenState extends State<LocationSelectionScreen> {
                         borderSide: BorderSide.none,
                       ),
                       hintText: 'Tap to select source location',
-                      suffixIcon: const Icon(Icons.location_on, color: Colors.red),
+                      suffixIcon:
+                      const Icon(Icons.location_on, color: mediumBlue),
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -165,6 +145,7 @@ class _LocationSelectionScreenState extends State<LocationSelectionScreen> {
                     onChanged: (value) {
                       setState(() {
                         _normalLiftSource = value!;
+                        widget.shiftData.normalLiftSource = value;
                       });
                     },
                     controlAffinity: ListTileControlAffinity.trailing,
@@ -175,6 +156,7 @@ class _LocationSelectionScreenState extends State<LocationSelectionScreen> {
                     onChanged: (value) {
                       setState(() {
                         _serviceLiftSource = value!;
+                        widget.shiftData.serviceLiftSource = value;
                       });
                     },
                     controlAffinity: ListTileControlAffinity.trailing,
@@ -182,23 +164,29 @@ class _LocationSelectionScreenState extends State<LocationSelectionScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('Floor', style: TextStyle(fontWeight: FontWeight.w500)),
+                      const Text('Floor',
+                          style: TextStyle(fontWeight: FontWeight.w500)),
                       Row(
                         children: [
                           IconButton(
-                            icon: const Icon(Icons.remove_circle_outline, color: Colors.red),
-                            onPressed: _floorSource > 0 ? () => setState(() => _floorSource--) : null,
+                            icon: const Icon(Icons.remove_circle_outline,
+                                color: mediumBlue),
+                            onPressed: _floorSource > 0
+                                ? () => setState(() => _floorSource--)
+                                : null,
                           ),
                           Container(
                             width: 40,
                             alignment: Alignment.center,
                             child: Text(
                               _floorSource.toString(),
-                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                              style: const TextStyle(
+                                  fontSize: 16, fontWeight: FontWeight.w500),
                             ),
                           ),
                           IconButton(
-                            icon: const Icon(Icons.add_circle_outline, color: Colors.red),
+                            icon: const Icon(Icons.add_circle_outline,
+                                color: mediumBlue),
                             onPressed: () => setState(() => _floorSource++),
                           ),
                         ],
@@ -208,10 +196,9 @@ class _LocationSelectionScreenState extends State<LocationSelectionScreen> {
                   const SizedBox(height: 24),
                   const Divider(),
                   const SizedBox(height: 16),
-                  const Text(
-                    'Destination',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
+                  const Text('Destination',
+                      style:
+                      TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
                   const Text('Locality'),
                   const SizedBox(height: 4),
@@ -227,7 +214,8 @@ class _LocationSelectionScreenState extends State<LocationSelectionScreen> {
                         borderSide: BorderSide.none,
                       ),
                       hintText: 'Tap to select destination location',
-                      suffixIcon: const Icon(Icons.location_on, color: Colors.red),
+                      suffixIcon:
+                      const Icon(Icons.location_on, color: mediumBlue),
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -237,6 +225,7 @@ class _LocationSelectionScreenState extends State<LocationSelectionScreen> {
                     onChanged: (value) {
                       setState(() {
                         _normalLiftDestination = value!;
+                        widget.shiftData.normalLiftDestination = value;
                       });
                     },
                     controlAffinity: ListTileControlAffinity.trailing,
@@ -247,6 +236,7 @@ class _LocationSelectionScreenState extends State<LocationSelectionScreen> {
                     onChanged: (value) {
                       setState(() {
                         _serviceLiftDestination = value!;
+                        widget.shiftData.serviceLiftDestination = value;
                       });
                     },
                     controlAffinity: ListTileControlAffinity.trailing,
@@ -254,23 +244,29 @@ class _LocationSelectionScreenState extends State<LocationSelectionScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('Floor', style: TextStyle(fontWeight: FontWeight.w500)),
+                      const Text('Floor',
+                          style: TextStyle(fontWeight: FontWeight.w500)),
                       Row(
                         children: [
                           IconButton(
-                            icon: const Icon(Icons.remove_circle_outline, color: Colors.red),
-                            onPressed: _floorDestination > 0 ? () => setState(() => _floorDestination--) : null,
+                            icon: const Icon(Icons.remove_circle_outline,
+                                color: mediumBlue),
+                            onPressed: _floorDestination > 0
+                                ? () => setState(() => _floorDestination--)
+                                : null,
                           ),
                           Container(
                             width: 40,
                             alignment: Alignment.center,
                             child: Text(
                               _floorDestination.toString(),
-                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                              style: const TextStyle(
+                                  fontSize: 16, fontWeight: FontWeight.w500),
                             ),
                           ),
                           IconButton(
-                            icon: const Icon(Icons.add_circle_outline, color: Colors.red),
+                            icon: const Icon(Icons.add_circle_outline,
+                                color: mediumBlue),
                             onPressed: () => setState(() => _floorDestination++),
                           ),
                         ],
@@ -282,7 +278,31 @@ class _LocationSelectionScreenState extends State<LocationSelectionScreen> {
               ),
             ),
           ),
-          const NextButton(),
+          NextButton(
+            totalProducts: widget.shiftData.getTotalProductCount(),
+            selectedDate: widget.shiftData.selectedDate,
+            selectedTime: widget.shiftData.selectedTime,
+            onPressed: () {
+              if (_sourceLocalityController.text.isEmpty ||
+                  _destinationLocalityController.text.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                      content:
+                      Text('Please select both source and destination locations')),
+                );
+                return;
+              }
+              widget.shiftData.floorSource = _floorSource;
+              widget.shiftData.floorDestination = _floorDestination;
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      YourFinalScreen(shiftData: widget.shiftData),
+                ),
+              );
+            },
+          ),
         ],
       ),
     );

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../lib/views/location_selection_screen.dart';
 import '../viewmodels/shift_house_viewmodel.dart';
 import 'item_detail_screen.dart';
+import '../../models/ShiftData.dart'; // Import ShiftData
 
 const Color darkBlue = Color(0xFF03669d);
 const Color mediumBlue = Color(0xFF37b3e7);
@@ -16,6 +17,11 @@ class ShiftHouseScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<ShiftHouseViewModel>(
       builder: (context, viewModel, child) {
+        // Calculate total products from item counts
+        int totalProducts = viewModel.itemCategories.fold(0, (sum, category) {
+          return sum + viewModel.getTotalItemsInCategory(category.name);
+        });
+
         return Scaffold(
           backgroundColor: Colors.white,
           appBar: AppBar(
@@ -31,7 +37,7 @@ class ShiftHouseScreen extends StatelessWidget {
             backgroundColor: darkBlue,
             elevation: 0,
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back, color: whiteColor),
+              icon: const Icon(Icons.arrow_back, color: Colors.white),
               onPressed: () => Navigator.pop(context),
             ),
           ),
@@ -234,13 +240,24 @@ class ShiftHouseScreen extends StatelessWidget {
                         return;
                       }
 
-                      // Navigate to the next screen (you'll need to replace this with your actual next screen)
+                      // Create ShiftData instance
+                      final shiftData = ShiftData(
+                        serviceId: 0, // Placeholder; replace with actual serviceId if available
+                        serviceName: 'Shift My House', // Placeholder; replace with actual serviceName if available
+                        selectedDate: viewModel.shiftHouseData.selectedDate,
+                        selectedTime: viewModel.shiftHouseData.selectedTime,
+                        selectedProducts: viewModel.getSelectedProducts(), // Now implemented
+                      );
+
+                      // Navigate to the next screen with ShiftData
                       Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) => ChangeNotifierProvider.value(
                             value: viewModel,
-                            child: const LocationSelectionScreen(), // Replace with your actual next screen
+                            child: LocationSelectionScreen(
+                              shiftData: shiftData,
+                            ),
                           ),
                         ),
                       );

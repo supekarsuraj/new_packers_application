@@ -1,11 +1,20 @@
 import 'package:flutter/material.dart';
 
-import '../lib/views/location_selection_screen.dart';
-
 const Color darkBlue = Color(0xFF03669d);
 
 class NextButton extends StatelessWidget {
-  const NextButton({super.key});
+  final int totalProducts;
+  final String selectedDate;
+  final String selectedTime;
+  final VoidCallback? onPressed;
+
+  const NextButton({
+    super.key,
+    required this.totalProducts,
+    required this.selectedDate,
+    required this.selectedTime,
+    this.onPressed,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -14,14 +23,7 @@ class NextButton extends StatelessWidget {
       child: SizedBox(
         width: double.infinity,
         child: ElevatedButton(
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const LocationSelectionScreen(),
-              ),
-            );
-          },
+          onPressed: onPressed,
           style: ElevatedButton.styleFrom(
             backgroundColor: darkBlue,
             padding: const EdgeInsets.symmetric(vertical: 16),
