@@ -43,64 +43,33 @@ class _LocationSelectionScreenState extends State<LocationSelectionScreen> {
     _normalLiftDestination = widget.shiftData.normalLiftDestination;
     _serviceLiftDestination = widget.shiftData.serviceLiftDestination;
     _floorDestination = widget.shiftData.floorDestination;
+    // Initialize text controllers with existing addresses if available
+    _sourceLocalityController.text = widget.shiftData.sourceAddress ?? '';
+    _destinationLocalityController.text = widget.shiftData.destinationAddress ?? '';
   }
 
   Future<void> _pickLocation(bool isSource) async {
-    final LatLng? selectedLocation = await Navigator.push(
+    final result = await Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const MapPickerScreen()),
     );
 
-    if (selectedLocation != null) {
-      try {
-        List<Placemark> placemarks = await placemarkFromCoordinates(
-          selectedLocation.latitude,
-          selectedLocation.longitude,
-          localeIdentifier: "en_IN",
-        );
-
-        if (placemarks.isNotEmpty) {
-          Placemark place = placemarks[0];
-          String address = _buildAddressString(place);
-
-          setState(() {
-            if (isSource) {
-              _sourceLocalityController.text = address;
-              widget.shiftData.sourceCoordinates = selectedLocation;
-              widget.shiftData.sourceAddress = address; // ✅ save address
-            } else {
-              _destinationLocalityController.text = address;
-              widget.shiftData.destinationCoordinates = selectedLocation;
-              widget.shiftData.destinationAddress = address; // ✅ save address
-            }
-          });
-
-          Fluttertoast.showToast(msg: "Location selected successfully");
+    if (result != null && result is Map) {
+      setState(() {
+        if (isSource) {
+          _sourceLocalityController.text = result['address'] ?? 'Unknown location';
+          widget.shiftData.sourceCoordinates = result['coordinates'];
+          widget.shiftData.sourceAddress = result['address'];
         } else {
-          Fluttertoast.showToast(msg: "No address found for this location");
+          _destinationLocalityController.text = result['address'] ?? 'Unknown location';
+          widget.shiftData.destinationCoordinates = result['coordinates'];
+          widget.shiftData.destinationAddress = result['address'];
         }
-      } catch (e) {
-        Fluttertoast.showToast(msg: "Error getting address: ${e.toString()}");
-      }
+      });
+      Fluttertoast.showToast(msg: "Location selected successfully");
+    } else {
+      Fluttertoast.showToast(msg: "No location selected");
     }
-  }
-
-  String _buildAddressString(Placemark place) {
-    List<String> addressComponents = [];
-    if (place.name != null && place.name!.isNotEmpty)
-      addressComponents.add(place.name!);
-    if (place.subLocality != null && place.subLocality!.isNotEmpty)
-      addressComponents.add(place.subLocality!);
-    if (place.locality != null && place.locality!.isNotEmpty)
-      addressComponents.add(place.locality!);
-    if (place.postalCode != null && place.postalCode!.isNotEmpty)
-      addressComponents.add(place.postalCode!);
-    if (place.administrativeArea != null &&
-        place.administrativeArea!.isNotEmpty)
-      addressComponents.add(place.administrativeArea!);
-    return addressComponents.isNotEmpty
-        ? addressComponents.join(", ")
-        : "Unknown location";
   }
 
   @override
@@ -314,12 +283,12 @@ class _LocationSelectionScreenState extends State<LocationSelectionScreen> {
             selectedDate: widget.shiftData.selectedDate,
             selectedTime: widget.shiftData.selectedTime,
             onPressed: () {
-              if (widget.shiftData.sourceCoordinates == null ||
-                  widget.shiftData.destinationCoordinates == null) {
+              if (_sourceLocalityController.text.isEmpty ||
+                  _destinationLocalityController.text.isEmpty) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                       content:
-                      Text('Please select both source and destination')),
+                      Text('Please select both source and destination locations')),
                 );
                 return;
               }
