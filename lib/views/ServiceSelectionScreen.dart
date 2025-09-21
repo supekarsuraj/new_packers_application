@@ -15,11 +15,13 @@ const Color whiteColor = Color(0xFFf7f7f7);
 class ServiceSelectionScreen extends StatefulWidget {
   final int subCategoryId;
   final String subCategoryName;
+  final int? customerId;
 
   const ServiceSelectionScreen({
     super.key,
     required this.subCategoryId,
     required this.subCategoryName,
+    this.customerId,
   });
 
   @override
@@ -61,7 +63,6 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
     '02:00 PM'
   ];
 
-  // Map of serviceId -> selected products
   Map<int, List<SelectedProduct>> serviceSelectedProducts = {};
   Map<int, int> serviceProductCounts = {};
 
@@ -276,6 +277,7 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
                                     selectedDate: selectedDate,
                                     selectedTime: selectedTime,
                                     initialSelectedProducts: serviceSelectedProducts[service.id] ?? [],
+                                    customerId: widget.customerId, // Added customerId
                                   ),
                                 ),
                               );
@@ -346,6 +348,7 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
                     selectedDate: selectedDate,
                     selectedTime: selectedTime,
                     selectedProducts: serviceSelectedProducts.values.expand((list) => list).toList(),
+                    customerId: widget.customerId,
                   );
                   Navigator.push(
                     context,

@@ -15,6 +15,7 @@ const Color mediumBlue = Color(0xFF37b3e7);
 class LocationSelectionScreen extends StatefulWidget {
   final ShiftData shiftData;
 
+
   const LocationSelectionScreen({super.key, required this.shiftData});
 
   @override

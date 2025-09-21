@@ -1,4 +1,6 @@
+// models/ShiftData.dart
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+
 import '../views/SelectedProduct.dart';
 
 class ShiftData {
@@ -7,16 +9,23 @@ class ShiftData {
   final String selectedDate;
   final String selectedTime;
   final List<SelectedProduct> selectedProducts;
+
+  // Customer ID field
+  int? customerId;
+
+  // Location data
+  String? sourceAddress;
+  String? destinationAddress;
   LatLng? sourceCoordinates;
   LatLng? destinationCoordinates;
-  String? sourceAddress;        // ✅ new
-  String? destinationAddress;   // ✅ new
-  int floorSource;
-  int floorDestination;
-  bool normalLiftSource;
-  bool serviceLiftSource;
-  bool normalLiftDestination;
-  bool serviceLiftDestination;
+
+  // Floor and lift data
+  int floorSource = 0;
+  int floorDestination = 0;
+  bool normalLiftSource = false;
+  bool serviceLiftSource = false;
+  bool normalLiftDestination = false;
+  bool serviceLiftDestination = false;
 
   ShiftData({
     required this.serviceId,
@@ -24,10 +33,11 @@ class ShiftData {
     required this.selectedDate,
     required this.selectedTime,
     required this.selectedProducts,
+    this.customerId,
+    this.sourceAddress,
+    this.destinationAddress,
     this.sourceCoordinates,
     this.destinationCoordinates,
-    this.sourceAddress,          // ✅ new
-    this.destinationAddress,     // ✅ new
     this.floorSource = 0,
     this.floorDestination = 0,
     this.normalLiftSource = false,

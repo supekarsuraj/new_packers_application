@@ -125,6 +125,7 @@ class _SubCategoryScreenState extends State<SubCategoryScreen> {
                   builder: (context) => ServiceSelectionScreen(
                     subCategoryId: subCategory.id,
                     subCategoryName: subCategory.subCategoryName,
+                    customerId: widget.customerId, // Pass customerId
                   ),
                 ),
               );
