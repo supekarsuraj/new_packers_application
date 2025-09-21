@@ -1,4 +1,4 @@
-// lib/views/home_service_view.dart (Updated for better flow, no changes needed based on issue, but ensuring consistency)
+// lib/views/home_service_view.dart (Updated to pass customerId)
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:convert';
@@ -15,8 +15,9 @@ const Color whiteColor = Color(0xFFf7f7f7);
 
 class HomeServiceView extends StatefulWidget {
   final UserData? userData;
+  final int? customerId; // Added customerId parameter
 
-  const HomeServiceView({super.key, this.userData});
+  const HomeServiceView({super.key, this.userData, this.customerId});
 
   @override
   State<HomeServiceView> createState() => _HomeServiceViewState();
@@ -114,7 +115,9 @@ class _HomeServiceViewState extends State<HomeServiceView> {
   void _navigateToMyRequest() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const MyRequestScreen()),
+      MaterialPageRoute(
+        builder: (context) => MyRequestScreen(),
+      ),
     );
   }
 
@@ -197,6 +200,7 @@ class _HomeServiceViewState extends State<HomeServiceView> {
             builder: (context) => SubCategoryScreen(
               categoryId: category["id"],
               categoryName: name,
+              customerId: widget.customerId, // Pass customerId
             ),
           ),
         );

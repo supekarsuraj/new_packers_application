@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:intl/intl.dart'; // For date picker formatting
-import 'package:google_maps_flutter/google_maps_flutter.dart'; // For MapPickerScreen
-import 'package:fluttertoast/fluttertoast.dart'; // For toast messages
+import 'package:intl/intl.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 import '../lib/views/map_picker_screen.dart';
+import '../models/ServiceEnquiryData.dart';
 import 'ServiceSelectionScreen.dart';
+import 'ThankYouScreen.dart';
 
 const Color darkBlue = Color(0xFF03669d);
 const Color mediumBlue = Color(0xFF37b3e7);
@@ -16,11 +18,13 @@ const Color whiteColor = Color(0xFFf7f7f7);
 class SubCategoryScreen extends StatefulWidget {
   final int categoryId;
   final String categoryName;
+  final int? customerId; // Added customerId
 
   const SubCategoryScreen({
     super.key,
     required this.categoryId,
     required this.categoryName,
+    this.customerId,
   });
 
   @override
@@ -131,6 +135,7 @@ class _SubCategoryScreenState extends State<SubCategoryScreen> {
                   builder: (context) => ServiceFormScreen(
                     subCategoryId: subCategory.id,
                     subCategoryName: subCategory.subCategoryName,
+                    customerId: widget.customerId,
                   ),
                 ),
               );
@@ -209,11 +214,13 @@ class _SubCategoryScreenState extends State<SubCategoryScreen> {
 class ServiceFormScreen extends StatefulWidget {
   final int subCategoryId;
   final String subCategoryName;
+  final int? customerId; // Added customerId
 
   const ServiceFormScreen({
     super.key,
     required this.subCategoryId,
     required this.subCategoryName,
+    this.customerId,
   });
 
   @override
@@ -224,9 +231,10 @@ class _ServiceFormScreenState extends State<ServiceFormScreen> {
   final _formKey = GlobalKey<FormState>();
   final _serviceDescriptionController = TextEditingController();
   final _serviceLocationController = TextEditingController();
-  final _flatNumberController = TextEditingController(); // Added for flat number
+  final _flatNumberController = TextEditingController();
   DateTime? _selectedDate;
-  LatLng? _selectedLocation; // Store LatLng for potential API submission
+  LatLng? _selectedLocation;
+  bool _isSubmitting = false;
 
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
@@ -272,17 +280,93 @@ class _ServiceFormScreenState extends State<ServiceFormScreen> {
     }
   }
 
-  void _submitForm() {
+  Future<ServiceEnquiryResponse?> _submitServiceEnquiry() async {
+    try {
+      const String apiUrl = 'https://54kidsstreet.org/api/enquiry/storeServiceEnquiry';
+
+      // Prepare form data
+      var request = http.MultipartRequest('POST', Uri.parse(apiUrl));
+
+      // Add form fields
+      request.fields['customer_id'] = widget.customerId?.toString() ?? '0';
+      request.fields['service_name'] = widget.subCategoryName;
+      request.fields['service_description'] = _serviceDescriptionController.text.trim();
+      request.fields['service_location'] = _serviceLocationController.text.trim();
+      request.fields['flat_no'] = _flatNumberController.text.trim();
+      request.fields['service_date'] = _selectedDate != null
+          ? DateFormat('yyyy-MM-dd').format(_selectedDate!)
+          : '';
+
+      // Add coordinates if available
+      if (_selectedLocation != null) {
+        request.fields['latitude'] = _selectedLocation!.latitude.toString();
+        request.fields['longitude'] = _selectedLocation!.longitude.toString();
+      }
+
+      // Set headers
+      request.headers.addAll({
+        'Accept': 'application/json',
+        'Content-Type': 'multipart/form-data',
+      });
+
+      // Send request
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonData = json.decode(response.body);
+        return ServiceEnquiryResponse.fromJson(jsonData);
+      } else {
+        print('Failed to submit enquiry: ${response.statusCode}');
+        print('Response body: ${response.body}');
+        return null;
+      }
+    } catch (e) {
+      print('Error submitting enquiry: $e');
+      return null;
+    }
+  }
+
+  void _submitForm() async {
     if (_formKey.currentState!.validate() && _selectedDate != null) {
-      // Here you can handle the form submission, e.g., send data to an API
-      // Include widget.subCategoryName, _serviceDescriptionController.text,
-      // _serviceLocationController.text, _flatNumberController.text,
-      // _selectedDate, and _selectedLocation (LatLng) if needed
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Form submitted successfully!')),
-      );
-      // Optionally navigate back or to another screen
-      Navigator.pop(context);
+      setState(() {
+        _isSubmitting = true;
+      });
+
+      try {
+        ServiceEnquiryResponse? response = await _submitServiceEnquiry();
+
+        setState(() {
+          _isSubmitting = false;
+        });
+
+        if (response != null && response.status) {
+          // Navigate to Thank You screen
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ThankYouScreen(serviceResponse: response),
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(response?.msg ?? 'Failed to submit service request'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } catch (e) {
+        setState(() {
+          _isSubmitting = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('An error occurred. Please try again.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     } else {
       if (_selectedDate == null) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -296,7 +380,7 @@ class _ServiceFormScreenState extends State<ServiceFormScreen> {
   void dispose() {
     _serviceDescriptionController.dispose();
     _serviceLocationController.dispose();
-    _flatNumberController.dispose(); // Added for flat number
+    _flatNumberController.dispose();
     super.dispose();
   }
 
@@ -385,7 +469,7 @@ class _ServiceFormScreenState extends State<ServiceFormScreen> {
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _serviceLocationController,
-                  readOnly: true, // Make field read-only to prevent manual edits
+                  readOnly: true,
                   decoration: InputDecoration(
                     labelText: 'Service Location',
                     labelStyle: const TextStyle(color: darkBlue),
@@ -401,7 +485,7 @@ class _ServiceFormScreenState extends State<ServiceFormScreen> {
                       onPressed: _pickLocation,
                     ),
                   ),
-                  onTap: _pickLocation, // Allow tapping the field to open map
+                  onTap: _pickLocation,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Please select a service location';
@@ -463,7 +547,7 @@ class _ServiceFormScreenState extends State<ServiceFormScreen> {
                   ),
                 const SizedBox(height: 24),
                 ElevatedButton(
-                  onPressed: _submitForm,
+                  onPressed: _isSubmitting ? null : _submitForm,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: mediumBlue,
                     padding: const EdgeInsets.symmetric(vertical: 16),
@@ -471,7 +555,12 @@ class _ServiceFormScreenState extends State<ServiceFormScreen> {
                       borderRadius: BorderRadius.circular(25),
                     ),
                   ),
-                  child: const Text(
+                  child: _isSubmitting
+                      ? const CircularProgressIndicator(
+                    color: whiteColor,
+                    strokeWidth: 2,
+                  )
+                      : const Text(
                     'Submit',
                     style: TextStyle(
                       color: whiteColor,

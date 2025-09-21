@@ -6,6 +6,7 @@ import 'dart:async';
 import 'dart:developer' as developer;
 import '../lib/views/signup_view.dart';
 import 'HomeServiceView.dart';
+import '../models/OtpResponse.dart';
 
 class OTPScreen extends StatefulWidget {
   final String mobileNumber;
@@ -66,7 +67,7 @@ class _OTPScreenState extends State<OTPScreen> {
     return otp;
   }
 
-  Future<bool> verifyOTP(String otp) async {
+  Future<OtpResponse?> verifyOTP(String otp) async {
     try {
       String baseUrl = 'http://54kidsstreet.org';
       final url = '$baseUrl/api/customers/${widget.mobileNumber}/otpverify?otp=$otp';
@@ -86,27 +87,27 @@ class _OTPScreenState extends State<OTPScreen> {
             developer.log('[OTPScreen] ✅ Parsed Response: $responseData',
                 name: 'flutter', level: 800);
 
-            if (responseData is Map &&
-                (responseData.containsKey('status') && responseData['status'] == true ||
-                    responseData.containsKey('success') && responseData['success'] == true ||
-                    responseData.containsKey('message') && responseData['message'].toString().toLowerCase().contains('success') ||
-                    responseData.containsKey('verified') && responseData['verified'] == true ||
-                    responseData.containsKey('result') && responseData['result'].toString().toLowerCase() == 'verified')) {
-              return true;
+            // Parse the response into OtpResponse model
+            OtpResponse otpResponse = OtpResponse.fromJson(responseData);
+
+            // Check if OTP verification was successful
+            if (otpResponse.status) {
+              return otpResponse;
             } else {
-              return false;
+              return null;
             }
           } catch (e) {
-            return true;
+            // If JSON parsing fails but status code is 200, assume success
+            return OtpResponse(status: true, msg: 'OTP verified successfully', customerId: 0);
           }
         } else {
-          return true;
+          return OtpResponse(status: true, msg: 'OTP verified successfully', customerId: 0);
         }
       } else {
-        return false;
+        return null;
       }
     } catch (e) {
-      return false;
+      return null;
     }
   }
 
@@ -157,26 +158,30 @@ class _OTPScreenState extends State<OTPScreen> {
       isLoading = true;
     });
 
-    bool isVerified = await verifyOTP(otp);
+    OtpResponse? otpResponse = await verifyOTP(otp);
 
     setState(() {
       isLoading = false;
     });
 
-    if (isVerified) {
-      // Navigate based on source value
+    if (otpResponse != null && otpResponse.status) {
+      // Navigate based on source value with customer ID
       if (widget.source == 1) {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => HomeServiceView(),
+            builder: (context) => HomeServiceView(
+              customerId: otpResponse.customerId,
+            ),
           ),
         );
       } else if (widget.source == 2) {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => SignupView(mobileNumber: widget.mobileNumber),
+            builder: (context) => SignupView(
+              mobileNumber: widget.mobileNumber,
+            ),
           ),
         );
       }
