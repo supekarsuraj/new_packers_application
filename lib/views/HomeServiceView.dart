@@ -116,10 +116,11 @@ class _HomeServiceViewState extends State<HomeServiceView> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => MyRequestScreen(),
+        builder: (context) => MyRequestScreen(customerId: widget.customerId ?? 0),
       ),
     );
   }
+
 
   void _openWhatsApp() async {
     final String phoneNumber = '919022062666';
