@@ -186,67 +186,96 @@ class EnquiryThankYouScreen extends StatelessWidget {
 
   List<Widget> _parseAndDisplayProducts(String productsJson) {
     try {
-      List<dynamic> products = json.decode(productsJson);
+      // First decode outer JSON string
+      final decoded = json.decode(productsJson);
+
+      // If still string, decode again (handle double encoding)
+      List<dynamic> products =
+      decoded is String ? json.decode(decoded) : decoded;
+
       return products.map((product) {
         String productName = product['product_name'] ?? 'Unknown Product';
         String quantity = product['quantity'] ?? '0';
 
-        return Container(
-          margin: const EdgeInsets.only(bottom: 8),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: lightBlue.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: lightBlue.withOpacity(0.3)),
+        return Card(
+          margin: const EdgeInsets.only(bottom: 12),
+          elevation: 3,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Text(
-                  productName,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: darkBlue,
-                    fontFamily: 'Poppins',
-                    fontWeight: FontWeight.w500,
+          child: Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Icon for product
+                Container(
+                  height: 45,
+                  width: 45,
+                  decoration: BoxDecoration(
+                    color: mediumBlue.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(Icons.chair_alt, color: mediumBlue),
+                ),
+                const SizedBox(width: 12),
+
+                // Product name
+                Expanded(
+                  child: Text(
+                    productName,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: darkBlue,
+                      fontFamily: 'Poppins',
+                    ),
                   ),
                 ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: mediumBlue,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  'Qty: $quantity',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Colors.white,
-                    fontFamily: 'Poppins',
-                    fontWeight: FontWeight.bold,
+
+                // Quantity badge
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: mediumBlue,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    'Qty: $quantity',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      fontFamily: 'Poppins',
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         );
       }).toList();
     } catch (e) {
-      // If JSON parsing fails, display the raw string
       return [
-        Text(
-          productsJson,
-          style: const TextStyle(
-            fontSize: 14,
-            color: darkBlue,
-            fontFamily: 'Poppins',
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.red.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Text(
+            "Error parsing products: ${e.toString()}",
+            style: const TextStyle(
+              fontSize: 14,
+              color: Colors.red,
+              fontFamily: 'Poppins',
+            ),
           ),
         ),
       ];
     }
   }
+
 
   Widget _buildDetailRow(String label, String value) {
     return Padding(
