@@ -190,7 +190,10 @@ class _HomeServiceViewState extends State<HomeServiceView> {
 
   Widget _buildCategoryButton(Map<String, dynamic> category) {
     String name = category["name"] ?? "Unknown";
-    String? imageUrl = category["image_url"];
+    // Construct the image URL using the base URL and icon_image from the API
+    String? imageUrl = category["icon_image"] != null && category["icon_image"].isNotEmpty
+        ? "https://54kidsstreet.org/admin_assets/category_icon_img/${category["icon_image"]}"
+        : null;
     IconData defaultIcon = Icons.category;
 
     return ElevatedButton(
@@ -216,18 +219,28 @@ class _HomeServiceViewState extends State<HomeServiceView> {
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center, // Ensure horizontal centering
         children: [
-          imageUrl != null && imageUrl.isNotEmpty
-              ? FadeInImage.assetNetwork(
-            placeholder: 'assets/parcelwala4.jpg',
-            image: imageUrl,
-            height: 28,
-            width: 28,
-            fit: BoxFit.cover,
-            imageErrorBuilder: (c, e, s) =>
-                Icon(defaultIcon, color: mediumBlue, size: 28),
-          )
-              : Icon(defaultIcon, color: mediumBlue, size: 28),
+          Center( // Explicitly center the icon/image
+            child: imageUrl != null && imageUrl.isNotEmpty
+                ? SizedBox(
+              height: 28,
+              width: 28,
+              child: ClipRRect( // Clip to ensure image stays within bounds
+                child: FadeInImage.assetNetwork(
+                  placeholder: 'assets/parcelwala4.jpg',
+                  image: imageUrl,
+                  fit: BoxFit.contain, // Ensure image fits within bounds
+                  alignment: Alignment.center, // Center the image
+                  imageErrorBuilder: (context, error, stackTrace) {
+                    print('Failed to load image for $name: $imageUrl, Error: $error');
+                    return Icon(defaultIcon, color: mediumBlue, size: 28);
+                  },
+                ),
+              ),
+            )
+                : Icon(defaultIcon, color: mediumBlue, size: 28),
+          ),
           const SizedBox(height: 5),
           Text(
             name,
