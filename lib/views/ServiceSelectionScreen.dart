@@ -152,7 +152,7 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          '${widget.subCategoryName} Services',
+          '${widget.subCategoryName} Inventory',
           style: const TextStyle(
             fontFamily: 'Poppins',
             fontWeight: FontWeight.bold,

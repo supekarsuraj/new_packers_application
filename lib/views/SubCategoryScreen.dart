@@ -167,7 +167,7 @@ class _SubCategoryScreenState extends State<SubCategoryScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          '${widget.categoryName} Subcategories',
+          '${widget.categoryName}',
           style: const TextStyle(
             fontFamily: 'Poppins',
             fontWeight: FontWeight.bold,
