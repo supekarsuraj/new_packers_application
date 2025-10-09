@@ -1,13 +1,14 @@
-// models/ShiftData.dart
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-
 import '../views/SelectedProduct.dart';
 
 class ShiftData {
   final int serviceId;
   final String serviceName;
-  final String selectedDate;
-  final String selectedTime;
+
+  // Changed from final to allow modification
+  String selectedDate;
+  String selectedTime;
+
   final List<SelectedProduct> selectedProducts;
 
   // Customer ID field
