@@ -237,6 +237,11 @@ class _ServiceFormScreenState extends State<ServiceFormScreen> {
   LatLng? _selectedLocation;
   bool _isSubmitting = false;
 
+  @override
+  void initState() {
+    super.initState();
+  }
+
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -407,147 +412,207 @@ class _ServiceFormScreenState extends State<ServiceFormScreen> {
       ),
       body: Container(
         color: whiteColor,
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Form(
-            key: _formKey,
-            child: ListView(
-              children: [
-                // Display Service Name as a read-only text
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Service Name',
-                      style: TextStyle(
-                        color: darkBlue,
-                        fontSize: 16,
-                        fontFamily: 'Poppins',
+        child: Column(
+          children: [
+            // Banner and Description Section
+            Container(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Banner Image
+                  Container(
+                    height: 150,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      color: lightBlue,
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: FadeInImage.assetNetwork(
+                        placeholder: 'assets/parcelwala4.jpg',
+                        image: 'https://54kidsstreet.org/admin_assets/subcategories/914856cf99a820e3f21995180f0adbe8.jpg',
+                        fit: BoxFit.cover,
+                        imageErrorBuilder: (context, error, stackTrace) {
+                          return Image.asset(
+                            'assets/parcelwala4.jpg',
+                            fit: BoxFit.cover,
+                          );
+                        },
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 12, horizontal: 16),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey[400]!),
-                        borderRadius: BorderRadius.circular(10),
+                  ),
+                  const SizedBox(height: 8),
+                  // Description
+                  Text(
+                    'Professional ${widget.subCategoryName} service at your doorstep.\n'
+                        'Experienced technicians with quality service guarantee.\n'
+                        'Book your service now and get instant confirmation.',
+                    style: const TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 12,
+                      color: Colors.grey,
+                    ),
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            // Form Section - Scrollable
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Form(
+                  key: _formKey,
+                  child: ListView(
+                    children: [
+                      // Display Service Name as a read-only text
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Service Name',
+                            style: TextStyle(
+                              color: darkBlue,
+                              fontSize: 16,
+                              fontFamily: 'Poppins',
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 12, horizontal: 16),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.grey[400]!),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              widget.subCategoryName,
+                              style: const TextStyle(
+                                color: darkBlue,
+                                fontSize: 16,
+                                fontFamily: 'Poppins',
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                      child: Text(
-                        widget.subCategoryName,
-                        style: const TextStyle(
-                          color: darkBlue,
-                          fontSize: 16,
-                          fontFamily: 'Poppins',
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _serviceDescriptionController,
+                        decoration: InputDecoration(
+                          labelText: 'Service Description',
+                          labelStyle: const TextStyle(color: darkBlue),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: const BorderSide(color: mediumBlue),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        maxLines: 4,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter the service description';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _serviceLocationController,
+                        readOnly: true,
+                        decoration: InputDecoration(
+                          labelText: 'Service Location',
+                          labelStyle: const TextStyle(color: darkBlue),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: const BorderSide(color: mediumBlue),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          suffixIcon: IconButton(
+                            icon: const Icon(Icons.location_on, color: mediumBlue),
+                            onPressed: _pickLocation,
+                          ),
+                        ),
+                        onTap: _pickLocation,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please select a service location';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _flatNumberController,
+                        decoration: InputDecoration(
+                          labelText: 'Flat Number',
+                          labelStyle: const TextStyle(color: darkBlue),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: const BorderSide(color: mediumBlue),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter the flat number';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      InkWell(
+                        onTap: () => _selectDate(context),
+                        child: InputDecorator(
+                          decoration: InputDecoration(
+                            labelText: 'Service Date',
+                            labelStyle: const TextStyle(color: darkBlue),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderSide: const BorderSide(color: mediumBlue),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          child: Text(
+                            _selectedDate == null
+                                ? 'Select a date'
+                                : DateFormat('yyyy-MM-dd').format(_selectedDate!),
+                            style: const TextStyle(color: darkBlue),
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _serviceDescriptionController,
-                  decoration: InputDecoration(
-                    labelText: 'Service Description',
-                    labelStyle: const TextStyle(color: darkBlue),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(color: mediumBlue),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  maxLines: 4,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter the service description';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _serviceLocationController,
-                  readOnly: true,
-                  decoration: InputDecoration(
-                    labelText: 'Service Location',
-                    labelStyle: const TextStyle(color: darkBlue),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(color: mediumBlue),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    suffixIcon: IconButton(
-                      icon: const Icon(Icons.location_on, color: mediumBlue),
-                      onPressed: _pickLocation,
-                    ),
-                  ),
-                  onTap: _pickLocation,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please select a service location';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _flatNumberController,
-                  decoration: InputDecoration(
-                    labelText: 'Flat Number',
-                    labelStyle: const TextStyle(color: darkBlue),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(color: mediumBlue),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter the flat number';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                InkWell(
-                  onTap: () => _selectDate(context),
-                  child: InputDecorator(
-                    decoration: InputDecoration(
-                      labelText: 'Service Date',
-                      labelStyle: const TextStyle(color: darkBlue),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: const BorderSide(color: mediumBlue),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    child: Text(
-                      _selectedDate == null
-                          ? 'Select a date'
-                          : DateFormat('yyyy-MM-dd').format(_selectedDate!),
-                      style: const TextStyle(color: darkBlue),
-                    ),
+                      if (_selectedDate == null)
+                        const Padding(
+                          padding: EdgeInsets.only(top: 8.0),
+                          child: Text(
+                            'Please select a service date',
+                            style: TextStyle(color: Colors.red, fontSize: 12),
+                          ),
+                        ),
+                      const SizedBox(height: 24),
+                    ],
                   ),
                 ),
-                if (_selectedDate == null)
-                  const Padding(
-                    padding: EdgeInsets.only(top: 8.0),
-                    child: Text(
-                      'Please select a service date',
-                      style: TextStyle(color: Colors.red, fontSize: 12),
-                    ),
-                  ),
-                const SizedBox(height: 24),
-                ElevatedButton(
+              ),
+            ),
+            // Submit Button - Fixed at bottom
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
                   onPressed: _isSubmitting ? null : _submitForm,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: mediumBlue,
@@ -570,9 +635,9 @@ class _ServiceFormScreenState extends State<ServiceFormScreen> {
                     ),
                   ),
                 ),
-              ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );
