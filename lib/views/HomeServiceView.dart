@@ -15,7 +15,7 @@ const Color whiteColor = Color(0xFFf7f7f7);
 
 class HomeServiceView extends StatefulWidget {
   final UserData? userData;
-  final int? customerId; // Added customerId parameter
+  final int? customerId;
 
   const HomeServiceView({super.key, this.userData, this.customerId});
 
@@ -31,14 +31,18 @@ class _HomeServiceViewState extends State<HomeServiceView> {
   List<String> bannerImages = [];
   bool isLoadingCategories = true;
   bool isLoadingBanners = true;
+  Timer? _bannerTimer;
 
   @override
   void initState() {
     super.initState();
     _fetchCategories();
     _fetchBanners();
+  }
 
-    Timer.periodic(const Duration(seconds: 3), (Timer timer) {
+  void _startBannerTimer() {
+    _bannerTimer?.cancel();
+    _bannerTimer = Timer.periodic(const Duration(seconds: 3), (Timer timer) {
       if (mounted && bannerImages.isNotEmpty) {
         setState(() {
           currentIndex = (currentIndex + 1) % bannerImages.length;
@@ -79,10 +83,14 @@ class _HomeServiceViewState extends State<HomeServiceView> {
         final List<dynamic> banners = jsonData["data"];
 
         setState(() {
-          bannerImages = banners.map<String>((b) => "https://54kidsstreet.org/uploads/banner/${b["image"]}").toList();
+          bannerImages = banners.map<String>((b) =>
+          "https://54kidsstreet.org/admin_assets/banners/${b["image"]}"
+          ).toList();
 
           if (bannerImages.isEmpty) {
             _useFallbackBanners();
+          } else {
+            _startBannerTimer();
           }
           isLoadingBanners = false;
         });
@@ -103,11 +111,17 @@ class _HomeServiceViewState extends State<HomeServiceView> {
         'assets/parcelwala7.jpg',
       ];
       isLoadingBanners = false;
+      _startBannerTimer();
     });
+  }
+
+  bool _isNetworkImage(String imagePath) {
+    return imagePath.startsWith('http://') || imagePath.startsWith('https://');
   }
 
   @override
   void dispose() {
+    _bannerTimer?.cancel();
     _pageController.dispose();
     super.dispose();
   }
@@ -121,10 +135,9 @@ class _HomeServiceViewState extends State<HomeServiceView> {
     );
   }
 
-
   void _openWhatsApp() async {
     final String phoneNumber = '919022062666';
-    final String message = 'Hello from from HomeServiceView';
+    final String message = 'Hello from HomeServiceView';
 
     final Uri whatsappAppUri = Uri.parse(
       'whatsapp://send?phone=$phoneNumber&text=${Uri.encodeComponent(message)}',
@@ -188,14 +201,11 @@ class _HomeServiceViewState extends State<HomeServiceView> {
     );
   }
 
-// Update only the _buildCategoryButton method in HomeServiceView
-
   Widget _buildCategoryButton(Map<String, dynamic> category) {
     String name = category["name"] ?? "Unknown";
     String? bannerImg = category["category_banner_img"];
     String? description = category["category_desc"];
 
-    // Construct the image URL using the base URL and icon_image from the API
     String? imageUrl = category["icon_image"] != null && category["icon_image"].isNotEmpty
         ? "https://54kidsstreet.org/admin_assets/category_icon_img/${category["icon_image"]}"
         : null;
@@ -210,8 +220,8 @@ class _HomeServiceViewState extends State<HomeServiceView> {
               categoryId: category["id"],
               categoryName: name,
               customerId: widget.customerId,
-              categoryBannerImg: bannerImg, // Pass banner image
-              categoryDesc: description, // Pass description
+              categoryBannerImg: bannerImg,
+              categoryDesc: description,
             ),
           ),
         );
@@ -298,7 +308,7 @@ class _HomeServiceViewState extends State<HomeServiceView> {
                 alignment: Alignment.centerLeft,
                 child: Text(
                   'Hi, ${widget.userData?.customerName ?? 'User'}',
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                     fontFamily: 'Poppins',
@@ -322,9 +332,11 @@ class _HomeServiceViewState extends State<HomeServiceView> {
                 },
                 itemBuilder: (context, index) {
                   final imagePath = bannerImages[index];
+                  final isNetwork = _isNetworkImage(imagePath);
+
                   return ClipRRect(
                     borderRadius: BorderRadius.circular(10),
-                    child: imagePath.endsWith(".webp")
+                    child: isNetwork
                         ? FadeInImage.assetNetwork(
                       placeholder: 'assets/parcelwala4.jpg',
                       image: imagePath,

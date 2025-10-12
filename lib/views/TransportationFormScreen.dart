@@ -236,13 +236,6 @@ class _TransportationFormScreenState extends State<TransportationFormScreen> {
     }
   }
 
-  String _getBannerImageUrl() {
-    if (widget.categoryBannerImg != null && widget.categoryBannerImg!.isNotEmpty) {
-      return 'https://54kidsstreet.org/admin_assets/category_banner/${widget.categoryBannerImg}';
-    }
-    return 'https://54kidsstreet.org/admin_assets/subcategories/914856cf99a820e3f21995180f0adbe8.jpg';
-  }
-
   @override
   void dispose() {
     _pickupLocationController.dispose();
@@ -254,6 +247,11 @@ class _TransportationFormScreenState extends State<TransportationFormScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Check if banner and description exist
+    bool hasBanner = widget.categoryBannerImg != null && widget.categoryBannerImg!.isNotEmpty;
+    bool hasDescription = widget.categoryDesc != null && widget.categoryDesc!.isNotEmpty;
+    bool showBannerSection = hasBanner || hasDescription;
+
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -276,53 +274,53 @@ class _TransportationFormScreenState extends State<TransportationFormScreen> {
         color: whiteColor,
         child: Column(
           children: [
-            // Banner and Description Section
-            Container(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Banner Image
-                  Container(
-                    height: 150,
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(8),
-                      color: lightBlue,
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: FadeInImage.assetNetwork(
-                        placeholder: 'assets/parcelwala4.jpg',
-                        image: _getBannerImageUrl(),
-                        fit: BoxFit.cover,
-                        imageErrorBuilder: (context, error, stackTrace) {
-                          return Image.asset(
-                            'assets/parcelwala4.jpg',
+            // Conditional Banner and Description Section
+            if (showBannerSection)
+              Container(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Banner Image - Only if exists
+                    if (hasBanner)
+                      Container(
+                        height: 150,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8),
+                          color: lightBlue,
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: FadeInImage.assetNetwork(
+                            placeholder: 'assets/parcelwala4.jpg',
+                            image: 'https://54kidsstreet.org/admin_assets/category_banner/${widget.categoryBannerImg}',
                             fit: BoxFit.cover,
-                          );
-                        },
+                            imageErrorBuilder: (context, error, stackTrace) {
+                              return Image.asset(
+                                'assets/parcelwala4.jpg',
+                                fit: BoxFit.cover,
+                              );
+                            },
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  // Description
-                  Text(
-                    widget.categoryDesc ??
-                        'Safe and reliable ${widget.subCategoryName} service.\n'
-                            'Professional drivers with well-maintained vehicles.\n'
-                            'Book your ride now and travel with confidence.',
-                    style: const TextStyle(
-                      fontFamily: 'Poppins',
-                      fontSize: 12,
-                      color: Colors.grey,
-                    ),
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
+                    if (hasBanner && hasDescription) const SizedBox(height: 8),
+                    // Description - Only if exists
+                    if (hasDescription)
+                      Text(
+                        widget.categoryDesc!,
+                        style: const TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                  ],
+                ),
               ),
-            ),
             // Form Section - Scrollable
             Expanded(
               child: Padding(
