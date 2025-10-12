@@ -18,12 +18,16 @@ class TransportationFormScreen extends StatefulWidget {
   final int subCategoryId;
   final String subCategoryName;
   final int? customerId;
+  final String? categoryBannerImg;
+  final String? categoryDesc;
 
   const TransportationFormScreen({
     super.key,
     required this.subCategoryId,
     required this.subCategoryName,
     this.customerId,
+    this.categoryBannerImg,
+    this.categoryDesc,
   });
 
   @override
@@ -42,7 +46,7 @@ class _TransportationFormScreenState extends State<TransportationFormScreen> {
   LatLng? _pickupCoordinates;
   LatLng? _destinationCoordinates;
   bool _isSubmitting = false;
-  String _locationType = ''; // 'pickup' or 'destination'
+  String _locationType = '';
 
   @override
   void initState() {
@@ -133,7 +137,6 @@ class _TransportationFormScreenState extends State<TransportationFormScreen> {
 
       var request = http.MultipartRequest('POST', Uri.parse(apiUrl));
 
-      // Add form fields
       request.fields['customer_id'] = widget.customerId?.toString() ?? '0';
       request.fields['service_name'] = widget.subCategoryName;
       request.fields['service_date'] = _selectedDate != null
@@ -147,13 +150,11 @@ class _TransportationFormScreenState extends State<TransportationFormScreen> {
       request.fields['flat_no'] = _flatNumberController.text.trim();
       request.fields['vehicle_model'] = _vehicleModelController.text.trim();
 
-      // Add pickup coordinates
       if (_pickupCoordinates != null) {
         request.fields['pickup_latitude'] = _pickupCoordinates!.latitude.toString();
         request.fields['pickup_longitude'] = _pickupCoordinates!.longitude.toString();
       }
 
-      // Add destination coordinates
       if (_destinationCoordinates != null) {
         request.fields['destination_latitude'] = _destinationCoordinates!.latitude.toString();
         request.fields['destination_longitude'] = _destinationCoordinates!.longitude.toString();
@@ -235,6 +236,13 @@ class _TransportationFormScreenState extends State<TransportationFormScreen> {
     }
   }
 
+  String _getBannerImageUrl() {
+    if (widget.categoryBannerImg != null && widget.categoryBannerImg!.isNotEmpty) {
+      return 'https://54kidsstreet.org/admin_assets/category_banner/${widget.categoryBannerImg}';
+    }
+    return 'https://54kidsstreet.org/admin_assets/subcategories/914856cf99a820e3f21995180f0adbe8.jpg';
+  }
+
   @override
   void dispose() {
     _pickupLocationController.dispose();
@@ -286,7 +294,7 @@ class _TransportationFormScreenState extends State<TransportationFormScreen> {
                       borderRadius: BorderRadius.circular(8),
                       child: FadeInImage.assetNetwork(
                         placeholder: 'assets/parcelwala4.jpg',
-                        image: 'https://54kidsstreet.org/admin_assets/subcategories/914856cf99a820e3f21995180f0adbe8.jpg',
+                        image: _getBannerImageUrl(),
                         fit: BoxFit.cover,
                         imageErrorBuilder: (context, error, stackTrace) {
                           return Image.asset(
@@ -300,9 +308,10 @@ class _TransportationFormScreenState extends State<TransportationFormScreen> {
                   const SizedBox(height: 8),
                   // Description
                   Text(
-                    'Safe and reliable ${widget.subCategoryName} service.\n'
-                        'Professional drivers with well-maintained vehicles.\n'
-                        'Book your ride now and travel with confidence.',
+                    widget.categoryDesc ??
+                        'Safe and reliable ${widget.subCategoryName} service.\n'
+                            'Professional drivers with well-maintained vehicles.\n'
+                            'Book your ride now and travel with confidence.',
                     style: const TextStyle(
                       fontFamily: 'Poppins',
                       fontSize: 12,

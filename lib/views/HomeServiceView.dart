@@ -188,8 +188,13 @@ class _HomeServiceViewState extends State<HomeServiceView> {
     );
   }
 
+// Update only the _buildCategoryButton method in HomeServiceView
+
   Widget _buildCategoryButton(Map<String, dynamic> category) {
     String name = category["name"] ?? "Unknown";
+    String? bannerImg = category["category_banner_img"];
+    String? description = category["category_desc"];
+
     // Construct the image URL using the base URL and icon_image from the API
     String? imageUrl = category["icon_image"] != null && category["icon_image"].isNotEmpty
         ? "https://54kidsstreet.org/admin_assets/category_icon_img/${category["icon_image"]}"
@@ -204,7 +209,9 @@ class _HomeServiceViewState extends State<HomeServiceView> {
             builder: (context) => SubCategoryScreen(
               categoryId: category["id"],
               categoryName: name,
-              customerId: widget.customerId, // Pass customerId
+              customerId: widget.customerId,
+              categoryBannerImg: bannerImg, // Pass banner image
+              categoryDesc: description, // Pass description
             ),
           ),
         );
@@ -219,19 +226,19 @@ class _HomeServiceViewState extends State<HomeServiceView> {
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center, // Ensure horizontal centering
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Center( // Explicitly center the icon/image
+          Center(
             child: imageUrl != null && imageUrl.isNotEmpty
                 ? SizedBox(
               height: 28,
               width: 28,
-              child: ClipRRect( // Clip to ensure image stays within bounds
+              child: ClipRRect(
                 child: FadeInImage.assetNetwork(
                   placeholder: 'assets/parcelwala4.jpg',
                   image: imageUrl,
-                  fit: BoxFit.contain, // Ensure image fits within bounds
-                  alignment: Alignment.center, // Center the image
+                  fit: BoxFit.contain,
+                  alignment: Alignment.center,
                   imageErrorBuilder: (context, error, stackTrace) {
                     print('Failed to load image for $name: $imageUrl, Error: $error');
                     return Icon(defaultIcon, color: mediumBlue, size: 28);

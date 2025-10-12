@@ -19,13 +19,17 @@ const Color whiteColor = Color(0xFFf7f7f7);
 class SubCategoryScreen extends StatefulWidget {
   final int categoryId;
   final String categoryName;
-  final int? customerId; // Added customerId
+  final int? customerId;
+  final String? categoryBannerImg; // Add banner image
+  final String? categoryDesc; // Add description
 
   const SubCategoryScreen({
     super.key,
     required this.categoryId,
     required this.categoryName,
     this.customerId,
+    this.categoryBannerImg,
+    this.categoryDesc,
   });
 
   @override
@@ -126,12 +130,13 @@ class _SubCategoryScreenState extends State<SubCategoryScreen> {
                   builder: (context) => ServiceSelectionScreen(
                     subCategoryId: subCategory.id,
                     subCategoryName: subCategory.subCategoryName,
-                    customerId: widget.customerId, // Pass customerId
+                    customerId: widget.customerId,
+                    categoryBannerImg: widget.categoryBannerImg,
+                    categoryDesc: widget.categoryDesc,
                   ),
                 ),
               );
-            }
-            else if (subCategory.subCategoryService ==2) {
+            } else if (subCategory.subCategoryService == 2) {
               Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -139,12 +144,12 @@ class _SubCategoryScreenState extends State<SubCategoryScreen> {
                     subCategoryId: subCategory.id,
                     subCategoryName: subCategory.subCategoryName,
                     customerId: widget.customerId,
+                    categoryBannerImg: widget.categoryBannerImg,
+                    categoryDesc: widget.categoryDesc,
                   ),
                 ),
               );
-            }
-
-              else {
+            } else {
               Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -152,6 +157,8 @@ class _SubCategoryScreenState extends State<SubCategoryScreen> {
                     subCategoryId: subCategory.id,
                     subCategoryName: subCategory.subCategoryName,
                     customerId: widget.customerId,
+                    categoryBannerImg: widget.categoryBannerImg,
+                    categoryDesc: widget.categoryDesc,
                   ),
                 ),
               );
@@ -182,7 +189,7 @@ class _SubCategoryScreenState extends State<SubCategoryScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          '${widget.categoryName}',
+          widget.categoryName,
           style: const TextStyle(
             fontFamily: 'Poppins',
             fontWeight: FontWeight.bold,
@@ -230,13 +237,17 @@ class _SubCategoryScreenState extends State<SubCategoryScreen> {
 class ServiceFormScreen extends StatefulWidget {
   final int subCategoryId;
   final String subCategoryName;
-  final int? customerId; // Added customerId
+  final int? customerId;
+  final String? categoryBannerImg;
+  final String? categoryDesc;
 
   const ServiceFormScreen({
     super.key,
     required this.subCategoryId,
     required this.subCategoryName,
     this.customerId,
+    this.categoryBannerImg,
+    this.categoryDesc,
   });
 
   @override
@@ -305,10 +316,8 @@ class _ServiceFormScreenState extends State<ServiceFormScreen> {
     try {
       const String apiUrl = 'https://54kidsstreet.org/api/enquiry/storeServiceEnquiry';
 
-      // Prepare form data
       var request = http.MultipartRequest('POST', Uri.parse(apiUrl));
 
-      // Add form fields
       request.fields['customer_id'] = widget.customerId?.toString() ?? '0';
       request.fields['service_name'] = widget.subCategoryName;
       request.fields['service_description'] = _serviceDescriptionController.text.trim();
@@ -318,19 +327,16 @@ class _ServiceFormScreenState extends State<ServiceFormScreen> {
           ? DateFormat('yyyy-MM-dd').format(_selectedDate!)
           : '';
 
-      // Add coordinates if available
       if (_selectedLocation != null) {
         request.fields['latitude'] = _selectedLocation!.latitude.toString();
         request.fields['longitude'] = _selectedLocation!.longitude.toString();
       }
 
-      // Set headers
       request.headers.addAll({
         'Accept': 'application/json',
         'Content-Type': 'multipart/form-data',
       });
 
-      // Send request
       final streamedResponse = await request.send();
       final response = await http.Response.fromStream(streamedResponse);
 
@@ -362,7 +368,6 @@ class _ServiceFormScreenState extends State<ServiceFormScreen> {
         });
 
         if (response != null && response.status) {
-          // Navigate to Thank You screen
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
@@ -395,6 +400,13 @@ class _ServiceFormScreenState extends State<ServiceFormScreen> {
         );
       }
     }
+  }
+
+  String _getBannerImageUrl() {
+    if (widget.categoryBannerImg != null && widget.categoryBannerImg!.isNotEmpty) {
+      return 'https://54kidsstreet.org/admin_assets/category_banner/${widget.categoryBannerImg}';
+    }
+    return 'https://54kidsstreet.org/admin_assets/subcategories/914856cf99a820e3f21995180f0adbe8.jpg';
   }
 
   @override
@@ -447,7 +459,7 @@ class _ServiceFormScreenState extends State<ServiceFormScreen> {
                       borderRadius: BorderRadius.circular(8),
                       child: FadeInImage.assetNetwork(
                         placeholder: 'assets/parcelwala4.jpg',
-                        image: 'https://54kidsstreet.org/admin_assets/subcategories/914856cf99a820e3f21995180f0adbe8.jpg',
+                        image: _getBannerImageUrl(),
                         fit: BoxFit.cover,
                         imageErrorBuilder: (context, error, stackTrace) {
                           return Image.asset(
@@ -461,9 +473,10 @@ class _ServiceFormScreenState extends State<ServiceFormScreen> {
                   const SizedBox(height: 8),
                   // Description
                   Text(
-                    'Professional ${widget.subCategoryName} service at your doorstep.\n'
-                        'Experienced technicians with quality service guarantee.\n'
-                        'Book your service now and get instant confirmation.',
+                    widget.categoryDesc ??
+                        'Professional ${widget.subCategoryName} service at your doorstep.\n'
+                            'Experienced technicians with quality service guarantee.\n'
+                            'Book your service now and get instant confirmation.',
                     style: const TextStyle(
                       fontFamily: 'Poppins',
                       fontSize: 12,

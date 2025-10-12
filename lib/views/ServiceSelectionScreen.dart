@@ -16,12 +16,16 @@ class ServiceSelectionScreen extends StatefulWidget {
   final int subCategoryId;
   final String subCategoryName;
   final int? customerId;
+  final String? categoryBannerImg; // Corrected
+  final String? categoryDesc; // Corrected
 
   const ServiceSelectionScreen({
     super.key,
     required this.subCategoryId,
     required this.subCategoryName,
     this.customerId,
+    this.categoryBannerImg, // Corrected - removed 'final String?'
+    this.categoryDesc, // Corrected - removed 'final String?'
   });
 
   @override
@@ -138,7 +142,7 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Banner Image
+                // Banner Image - Now Dynamic
                 Container(
                   height: 150,
                   width: double.infinity,
@@ -150,8 +154,9 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
                     borderRadius: BorderRadius.circular(8),
                     child: FadeInImage.assetNetwork(
                       placeholder: 'assets/parcelwala4.jpg',
-                      image:
-                      'https://54kidsstreet.org/admin_assets/subcategories/914856cf99a820e3f21995180f0adbe8.jpg',
+                      image: widget.categoryBannerImg != null && widget.categoryBannerImg!.isNotEmpty
+                          ? 'https://54kidsstreet.org/admin_assets/category_banner/${widget.categoryBannerImg}'
+                          : 'https://54kidsstreet.org/admin_assets/subcategories/914856cf99a820e3f21995180f0adbe8.jpg',
                       fit: BoxFit.cover,
                       imageErrorBuilder: (context, error, stackTrace) {
                         return Image.asset(
@@ -163,12 +168,13 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                // Description
-                const Text(
-                  'Reliable and affordable packing and moving services across India.\n'
-                      'Safe, stress-free relocation with 24x7 support and owned vehicles.\n'
-                      'Trusted for households, offices, cars, and bikes.',
-                  style: TextStyle(
+                // Description - Now Dynamic
+                Text(
+                  widget.categoryDesc ??
+                      'Reliable and affordable packing and moving services across India.\n'
+                          'Safe, stress-free relocation with 24x7 support and owned vehicles.\n'
+                          'Trusted for households, offices, cars, and bikes.',
+                  style: const TextStyle(
                     fontFamily: 'Poppins',
                     fontSize: 12,
                     color: Colors.grey,
