@@ -402,11 +402,13 @@ class _ServiceFormScreenState extends State<ServiceFormScreen> {
     }
   }
 
-  String _getBannerImageUrl() {
+  String? _getBannerImageUrl() {
     if (widget.categoryBannerImg != null && widget.categoryBannerImg!.isNotEmpty) {
-      return 'https://54kidsstreet.org/admin_assets/category_banner/${widget.categoryBannerImg}';
+      debugPrint("_getBannerImageUrl called with: ${widget.categoryBannerImg}");
+      return 'https://54kidsstreet.org/admin_assets/category_banner_img/${widget.categoryBannerImg}';
     }
-    return 'https://54kidsstreet.org/admin_assets/subcategories/914856cf99a820e3f21995180f0adbe8.jpg';
+    debugPrint("_getBannerImageUrl: No banner image provided");
+    return null; // Return null instead of a default URL
   }
 
   @override
@@ -419,6 +421,11 @@ class _ServiceFormScreenState extends State<ServiceFormScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Check if banner and description exist
+    bool hasBanner = widget.categoryBannerImg != null && widget.categoryBannerImg!.isNotEmpty;
+    bool hasDescription = widget.categoryDesc != null && widget.categoryDesc!.isNotEmpty;
+    bool showBannerSection = hasBanner || hasDescription;
+
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -441,53 +448,59 @@ class _ServiceFormScreenState extends State<ServiceFormScreen> {
         color: whiteColor,
         child: Column(
           children: [
-            // Banner and Description Section
-            Container(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Banner Image
-                  Container(
-                    height: 150,
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(8),
-                      color: lightBlue,
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: FadeInImage.assetNetwork(
-                        placeholder: 'assets/parcelwala4.jpg',
-                        image: _getBannerImageUrl(),
-                        fit: BoxFit.cover,
-                        imageErrorBuilder: (context, error, stackTrace) {
-                          return Image.asset(
-                            'assets/parcelwala4.jpg',
+            // Conditional Banner and Description Section
+            if (showBannerSection)
+              Container(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Banner Image - Only if exists
+                    if (hasBanner)
+                      Container(
+                        height: 150,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8),
+                          color: lightBlue,
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: FadeInImage.assetNetwork(
+                            placeholder: 'assets/parcelwala4.jpg', // Fallback for loading
+                            image: _getBannerImageUrl()!, // Non-null assertion since hasBanner ensures a valid URL
                             fit: BoxFit.cover,
-                          );
-                        },
+                            imageErrorBuilder: (context, error, stackTrace) {
+                              debugPrint("Image loading error: $error");
+                              return Container(
+                                color: lightBlue,
+                                child: const Center(
+                                  child: Text(
+                                    'Image not available',
+                                    style: TextStyle(color: darkBlue),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  // Description
-                  Text(
-                    widget.categoryDesc ??
-                        'Professional ${widget.subCategoryName} service at your doorstep.\n'
-                            'Experienced technicians with quality service guarantee.\n'
-                            'Book your service now and get instant confirmation.',
-                    style: const TextStyle(
-                      fontFamily: 'Poppins',
-                      fontSize: 12,
-                      color: Colors.grey,
-                    ),
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
+                    if (hasBanner && hasDescription) const SizedBox(height: 8),
+                    // Description - Only if exists
+                    if (hasDescription)
+                      Text(
+                        widget.categoryDesc!,
+                        style: const TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                  ],
+                ),
               ),
-            ),
             // Form Section - Scrollable
             Expanded(
               child: Padding(

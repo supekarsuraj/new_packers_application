@@ -161,7 +161,7 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
                         borderRadius: BorderRadius.circular(8),
                         child: FadeInImage.assetNetwork(
                           placeholder: 'assets/parcelwala4.jpg',
-                          image: 'https://54kidsstreet.org/admin_assets/category_banner/${widget.categoryBannerImg}',
+                          image: 'https://54kidsstreet.org/admin_assets/category_banner_img/${widget.categoryBannerImg}',
                           fit: BoxFit.cover,
                           imageErrorBuilder: (context, error, stackTrace) {
                             return Image.asset(
