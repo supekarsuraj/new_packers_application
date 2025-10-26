@@ -1,10 +1,11 @@
-// lib/views/home_service_view.dart (Updated to pass customerId)
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../lib/views/MyRequestScreen.dart';
+import '../lib/views/login_view.dart';
 import '../models/UserData.dart';
 import 'SubCategoryScreen.dart';
 
@@ -83,9 +84,9 @@ class _HomeServiceViewState extends State<HomeServiceView> {
         final List<dynamic> banners = jsonData["data"];
 
         setState(() {
-          bannerImages = banners.map<String>((b) =>
-          "https://54kidsstreet.org/admin_assets/banners/${b["image"]}"
-          ).toList();
+          bannerImages = banners
+              .map<String>((b) => "https://54kidsstreet.org/admin_assets/banners/${b["image"]}")
+              .toList();
 
           if (bannerImages.isEmpty) {
             _useFallbackBanners();
@@ -117,6 +118,18 @@ class _HomeServiceViewState extends State<HomeServiceView> {
 
   bool _isNetworkImage(String imagePath) {
     return imagePath.startsWith('http://') || imagePath.startsWith('https://');
+  }
+
+  Future<void> _logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('isLoggedIn');
+    await prefs.remove('customerId');
+    await prefs.remove('userData');
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => const LoginView()),
+          (route) => false,
+    );
   }
 
   @override
@@ -297,6 +310,13 @@ class _HomeServiceViewState extends State<HomeServiceView> {
             onPressed: () {},
           ),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout, color: whiteColor),
+            onPressed: _logout,
+            tooltip: 'Logout',
+          ),
+        ],
       ),
       body: Container(
         color: whiteColor,
@@ -342,8 +362,7 @@ class _HomeServiceViewState extends State<HomeServiceView> {
                       image: imagePath,
                       fit: BoxFit.cover,
                       imageErrorBuilder: (c, e, s) =>
-                          Image.asset('assets/parcelwala4.jpg',
-                              fit: BoxFit.cover),
+                          Image.asset('assets/parcelwala4.jpg', fit: BoxFit.cover),
                     )
                         : Image.asset(imagePath, fit: BoxFit.cover),
                   );
@@ -362,8 +381,7 @@ class _HomeServiceViewState extends State<HomeServiceView> {
                 childAspectRatio: 2.0,
                 children: [
                   ...categories.map((cat) => _buildCategoryButton(cat)),
-                  _buildButton('My Request', Icons.check_circle,
-                      onTap: _navigateToMyRequest),
+                  _buildButton('My Request', Icons.check_circle, onTap: _navigateToMyRequest),
                   _buildButton('Call Us', Icons.call, onTap: _makePhoneCall),
                 ],
               ),
@@ -384,8 +402,7 @@ class _HomeServiceViewState extends State<HomeServiceView> {
                   children: const [
                     Icon(Icons.chat, color: Colors.white),
                     SizedBox(width: 10),
-                    Text('Chat with us',
-                        style: TextStyle(color: Colors.white)),
+                    Text('Chat with us', style: TextStyle(color: Colors.white)),
                   ],
                 ),
               ),

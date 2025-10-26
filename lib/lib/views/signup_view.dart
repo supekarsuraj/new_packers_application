@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:developer' as developer;
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../models/UserData.dart';
 import '../../views/HomeServiceView.dart';
 import 'OTPSuccessView.dart';
@@ -88,6 +89,20 @@ class _SignupViewState extends State<SignupView> {
             if (responseData is Map && responseData.containsKey('data')) {
               final data = responseData['data'];
               if (data is Map && data['id'] != null) {
+                // Save login state and customerId
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.setBool('isLoggedIn', true);
+                await prefs.setString('customerId', data['id'].toString());
+                // Save UserData
+                final userData = UserData(
+                  customerName: nameController.text.trim(),
+                  email: emailController.text.trim(),
+                  pincode: pincodeController.text.trim(),
+                  city: cityController.text.trim(),
+                  state: selectedState ?? '',
+                  mobileNo: widget.mobileNumber,
+                );
+                await prefs.setString('userData', jsonEncode(userData.toJson()));
                 developer.log('[SignupView] ✅ User creation successful',
                     name: 'flutter', level: 800);
                 return true;
@@ -258,9 +273,7 @@ class _SignupViewState extends State<SignupView> {
                 ),
                 const SizedBox(height: 20),
                 ElevatedButton(
-                  onPressed: isLoading
-                      ? null
-                      : submitSignupForm,
+                  onPressed: isLoading ? null : submitSignupForm,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: SignupView.darkBlue,
                     minimumSize: const Size(double.infinity, 50),

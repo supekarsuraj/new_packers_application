@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:async';
 import 'dart:developer' as developer;
+import 'package:shared_preferences/shared_preferences.dart';
 import '../lib/views/signup_view.dart';
 import 'HomeServiceView.dart';
 import '../models/OtpResponse.dart';
@@ -92,6 +93,10 @@ class _OTPScreenState extends State<OTPScreen> {
 
             // Check if OTP verification was successful
             if (otpResponse.status) {
+              // Save login state and customerId
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.setBool('isLoggedIn', true);
+              await prefs.setString('customerId', otpResponse.customerId.toString());
               return otpResponse;
             } else {
               return null;
