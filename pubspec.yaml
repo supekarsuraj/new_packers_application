@@ -20,6 +20,7 @@ dependencies:
   fluttertoast: ^8.2.1
   intl: ^0.18.0
   shared_preferences: ^2.3.0
+  sms_autofill: ^2.3.0
 
 dev_dependencies:
   flutter_test:
