@@ -4,29 +4,29 @@ import '../views/SelectedProduct.dart';
 class ShiftData {
   final int serviceId;
   final String serviceName;
-
-  // Changed from final to allow modification
   String selectedDate;
   String selectedTime;
+  List<SelectedProduct> selectedProducts;
+  final int? customerId;
 
-  final List<SelectedProduct> selectedProducts;
+  // Additional fields for subcategory navigation
+  int? subCategoryId;
+  String? categoryBannerImg;
+  String? categoryDesc;
 
-  // Customer ID field
-  int? customerId;
-
-  // Location data
+  // Location related fields
   String? sourceAddress;
   String? destinationAddress;
   LatLng? sourceCoordinates;
   LatLng? destinationCoordinates;
 
-  // Floor and lift data
-  int floorSource = 0;
-  int floorDestination = 0;
+  // Lift and floor information
   bool normalLiftSource = false;
   bool serviceLiftSource = false;
+  int floorSource = 0;
   bool normalLiftDestination = false;
   bool serviceLiftDestination = false;
+  int floorDestination = 0;
 
   ShiftData({
     required this.serviceId,
@@ -35,19 +35,49 @@ class ShiftData {
     required this.selectedTime,
     required this.selectedProducts,
     this.customerId,
+    this.subCategoryId,
+    this.categoryBannerImg,
+    this.categoryDesc,
     this.sourceAddress,
     this.destinationAddress,
     this.sourceCoordinates,
     this.destinationCoordinates,
-    this.floorSource = 0,
-    this.floorDestination = 0,
     this.normalLiftSource = false,
     this.serviceLiftSource = false,
+    this.floorSource = 0,
     this.normalLiftDestination = false,
     this.serviceLiftDestination = false,
+    this.floorDestination = 0,
   });
 
+  // Method to get total product count
   int getTotalProductCount() {
     return selectedProducts.fold(0, (sum, product) => sum + product.count);
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'serviceId': serviceId,
+      'serviceName': serviceName,
+      'selectedDate': selectedDate,
+      'selectedTime': selectedTime,
+      'selectedProducts': selectedProducts.map((p) => p.toJson()).toList(),
+      'customerId': customerId,
+      'subCategoryId': subCategoryId,
+      'categoryBannerImg': categoryBannerImg,
+      'categoryDesc': categoryDesc,
+      'sourceAddress': sourceAddress,
+      'destinationAddress': destinationAddress,
+      'sourceLatitude': sourceCoordinates?.latitude,
+      'sourceLongitude': sourceCoordinates?.longitude,
+      'destinationLatitude': destinationCoordinates?.latitude,
+      'destinationLongitude': destinationCoordinates?.longitude,
+      'normalLiftSource': normalLiftSource,
+      'serviceLiftSource': serviceLiftSource,
+      'floorSource': floorSource,
+      'normalLiftDestination': normalLiftDestination,
+      'serviceLiftDestination': serviceLiftDestination,
+      'floorDestination': floorDestination,
+    };
   }
 }

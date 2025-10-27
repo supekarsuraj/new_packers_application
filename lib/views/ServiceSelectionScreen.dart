@@ -5,7 +5,8 @@ import 'dart:convert';
 import '../lib/views/location_selection_screen.dart';
 import '../models/ShiftData.dart';
 import 'ProductSelectionScreen.dart';
-import 'SelectedProduct.dart';
+import '../views/SelectedProduct.dart';
+import 'YourFinalScreen.dart';
 
 const Color darkBlue = Color(0xFF03669d);
 const Color mediumBlue = Color(0xFF37b3e7);
@@ -18,15 +19,17 @@ class ServiceSelectionScreen extends StatefulWidget {
   final int? customerId;
   final String? categoryBannerImg;
   final String? categoryDesc;
+  final ShiftData? shiftData;
 
   const ServiceSelectionScreen({
-    super.key,
+    Key? key,
     required this.subCategoryId,
     required this.subCategoryName,
     this.customerId,
     this.categoryBannerImg,
     this.categoryDesc,
-  });
+    this.shiftData,
+  }) : super(key: key);
 
   @override
   State<ServiceSelectionScreen> createState() => _ServiceSelectionScreenState();
@@ -116,7 +119,6 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Check if banner and description exist
     bool hasBanner = widget.categoryBannerImg != null && widget.categoryBannerImg!.isNotEmpty;
     bool hasDescription = widget.categoryDesc != null && widget.categoryDesc!.isNotEmpty;
     bool showBannerSection = hasBanner || hasDescription;
@@ -141,14 +143,12 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
       ),
       body: Column(
         children: [
-          // Conditional Banner and Description - Fixed height
           if (showBannerSection)
             Container(
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Banner Image - Only if exists
                   if (hasBanner)
                     Container(
                       height: 150,
@@ -173,7 +173,6 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
                       ),
                     ),
                   if (hasBanner && hasDescription) const SizedBox(height: 8),
-                  // Description - Only if exists
                   if (hasDescription)
                     Text(
                       widget.categoryDesc!,
@@ -186,7 +185,6 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
                       overflow: TextOverflow.ellipsis,
                     ),
                   const SizedBox(height: 16),
-                  // Select Services Title
                   const Text(
                     'Select Services',
                     style: TextStyle(
@@ -199,7 +197,6 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
                 ],
               ),
             ),
-          // Services List - Expanded to fill remaining space
           Expanded(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -236,8 +233,8 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
                                         serviceId: service.id,
                                         serviceName:
                                         service.serviceName,
-                                        selectedDate: '',
-                                        selectedTime: '',
+                                        selectedDate: widget.shiftData?.selectedDate ?? '',
+                                        selectedTime: widget.shiftData?.selectedTime ?? '',
                                         initialSelectedProducts:
                                         serviceSelectedProducts[
                                         service.id] ??
@@ -297,7 +294,6 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
               ),
             ),
           ),
-          // Next Button - Fixed at bottom
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: SizedBox(
@@ -315,23 +311,41 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
                     );
                     return;
                   }
-                  final shiftData = ShiftData(
-                    serviceId: 0,
-                    serviceName: 'Multiple Services',
-                    selectedDate: '',
-                    selectedTime: '',
-                    selectedProducts: serviceSelectedProducts.values
+
+                  // Update shiftData with selected products
+                  if (widget.shiftData != null) {
+                    widget.shiftData!.selectedProducts = serviceSelectedProducts.values
                         .expand((list) => list)
-                        .toList(),
-                    customerId: widget.customerId,
-                  );
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          LocationSelectionScreen(shiftData: shiftData),
-                    ),
-                  );
+                        .toList();
+
+                    // Navigate directly to confirmation screen (YourFinalScreen)
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            YourFinalScreen(shiftData: widget.shiftData!),
+                      ),
+                    );
+                  } else {
+                    // Fallback to old behavior if no shiftData
+                    final shiftData = ShiftData(
+                      serviceId: 0,
+                      serviceName: 'Multiple Services',
+                      selectedDate: '',
+                      selectedTime: '',
+                      selectedProducts: serviceSelectedProducts.values
+                          .expand((list) => list)
+                          .toList(),
+                      customerId: widget.customerId,
+                    );
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            LocationSelectionScreen(shiftData: shiftData),
+                      ),
+                    );
+                  }
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: darkBlue,

@@ -3,6 +3,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../../models/ShiftData.dart';
+import '../../views/ServiceSelectionScreen.dart';
 import '../../views/YourFinalScreen.dart';
 import 'map_picker_screen.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -13,8 +14,13 @@ const Color mediumBlue = Color(0xFF37b3e7);
 
 class LocationSelectionScreen extends StatefulWidget {
   final ShiftData shiftData;
+  final bool navigateToInventory;
 
-  const LocationSelectionScreen({super.key, required this.shiftData});
+  const LocationSelectionScreen({
+    Key? key,
+    required this.shiftData,
+    this.navigateToInventory = false,
+  }) : super(key: key);
 
   @override
   _LocationSelectionScreenState createState() =>
@@ -33,7 +39,6 @@ class _LocationSelectionScreenState extends State<LocationSelectionScreen> {
   bool _serviceLiftDestination = false;
   int _floorDestination = 0;
 
-  // Date and Time variables
   String selectedDate = '';
   String selectedTime = '';
   final List<String> timeSlots = [
@@ -54,11 +59,9 @@ class _LocationSelectionScreenState extends State<LocationSelectionScreen> {
     _normalLiftDestination = widget.shiftData.normalLiftDestination;
     _serviceLiftDestination = widget.shiftData.serviceLiftDestination;
     _floorDestination = widget.shiftData.floorDestination;
-    // Initialize text controllers with existing addresses if available
     _sourceLocalityController.text = widget.shiftData.sourceAddress ?? '';
     _destinationLocalityController.text =
         widget.shiftData.destinationAddress ?? '';
-    // Initialize date and time from shiftData if available
     selectedDate = widget.shiftData.selectedDate;
     selectedTime = widget.shiftData.selectedTime;
   }
@@ -145,7 +148,6 @@ class _LocationSelectionScreenState extends State<LocationSelectionScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Date and Time Selection Section
                   const Text(
                     'When to shift?',
                     style: TextStyle(
@@ -212,7 +214,6 @@ class _LocationSelectionScreenState extends State<LocationSelectionScreen> {
                   const Divider(),
                   const SizedBox(height: 16),
 
-                  // Source Section
                   const Text('Source',
                       style:
                       TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
@@ -269,7 +270,10 @@ class _LocationSelectionScreenState extends State<LocationSelectionScreen> {
                             icon: const Icon(Icons.remove_circle_outline,
                                 color: mediumBlue),
                             onPressed: _floorSource > 0
-                                ? () => setState(() => _floorSource--)
+                                ? () => setState(() {
+                              _floorSource--;
+                              widget.shiftData.floorSource = _floorSource;
+                            })
                                 : null,
                           ),
                           Container(
@@ -284,7 +288,10 @@ class _LocationSelectionScreenState extends State<LocationSelectionScreen> {
                           IconButton(
                             icon: const Icon(Icons.add_circle_outline,
                                 color: mediumBlue),
-                            onPressed: () => setState(() => _floorSource++),
+                            onPressed: () => setState(() {
+                              _floorSource++;
+                              widget.shiftData.floorSource = _floorSource;
+                            }),
                           ),
                         ],
                       ),
@@ -294,7 +301,6 @@ class _LocationSelectionScreenState extends State<LocationSelectionScreen> {
                   const Divider(),
                   const SizedBox(height: 16),
 
-                  // Destination Section
                   const Text('Destination',
                       style:
                       TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
@@ -351,7 +357,10 @@ class _LocationSelectionScreenState extends State<LocationSelectionScreen> {
                             icon: const Icon(Icons.remove_circle_outline,
                                 color: mediumBlue),
                             onPressed: _floorDestination > 0
-                                ? () => setState(() => _floorDestination--)
+                                ? () => setState(() {
+                              _floorDestination--;
+                              widget.shiftData.floorDestination = _floorDestination;
+                            })
                                 : null,
                           ),
                           Container(
@@ -366,8 +375,10 @@ class _LocationSelectionScreenState extends State<LocationSelectionScreen> {
                           IconButton(
                             icon: const Icon(Icons.add_circle_outline,
                                 color: mediumBlue),
-                            onPressed: () =>
-                                setState(() => _floorDestination++),
+                            onPressed: () => setState(() {
+                              _floorDestination++;
+                              widget.shiftData.floorDestination = _floorDestination;
+                            }),
                           ),
                         ],
                       ),
@@ -379,14 +390,12 @@ class _LocationSelectionScreenState extends State<LocationSelectionScreen> {
             ),
           ),
 
-          // Next Button
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () {
-                  // Validate date and time
                   if (selectedDate.isEmpty || selectedTime.isEmpty) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
@@ -397,7 +406,6 @@ class _LocationSelectionScreenState extends State<LocationSelectionScreen> {
                     return;
                   }
 
-                  // Validate locations
                   if (_sourceLocalityController.text.isEmpty ||
                       _destinationLocalityController.text.isEmpty) {
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -410,19 +418,36 @@ class _LocationSelectionScreenState extends State<LocationSelectionScreen> {
                     return;
                   }
 
-                  // Update shiftData with all values
                   widget.shiftData.floorSource = _floorSource;
                   widget.shiftData.floorDestination = _floorDestination;
                   widget.shiftData.selectedDate = selectedDate;
                   widget.shiftData.selectedTime = selectedTime;
 
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          YourFinalScreen(shiftData: widget.shiftData),
-                    ),
-                  );
+                  // Navigate to inventory screen if coming from subcategory
+                  if (widget.navigateToInventory) {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ServiceSelectionScreen(
+                          subCategoryId: widget.shiftData.subCategoryId ?? 0,
+                          subCategoryName: widget.shiftData.serviceName,
+                          customerId: widget.shiftData.customerId,
+                          categoryBannerImg: widget.shiftData.categoryBannerImg,
+                          categoryDesc: widget.shiftData.categoryDesc,
+                          shiftData: widget.shiftData,
+                        ),
+                      ),
+                    );
+                  } else {
+                    // Original navigation to YourFinalScreen
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            YourFinalScreen(shiftData: widget.shiftData),
+                      ),
+                    );
+                  }
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: darkBlue,

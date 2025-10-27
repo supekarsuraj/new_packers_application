@@ -10,6 +10,8 @@ import '../models/ServiceEnquiryData.dart';
 import 'ServiceSelectionScreen.dart';
 import 'ThankYouScreen.dart';
 import 'TransportationFormScreen.dart';
+import '../lib/views/location_selection_screen.dart';
+import '../models/ShiftData.dart';
 
 const Color darkBlue = Color(0xFF03669d);
 const Color mediumBlue = Color(0xFF37b3e7);
@@ -20,8 +22,8 @@ class SubCategoryScreen extends StatefulWidget {
   final int categoryId;
   final String categoryName;
   final int? customerId;
-  final String? categoryBannerImg; // Add banner image
-  final String? categoryDesc; // Add description
+  final String? categoryBannerImg;
+  final String? categoryDesc;
 
   const SubCategoryScreen({
     super.key,
@@ -124,15 +126,26 @@ class _SubCategoryScreenState extends State<SubCategoryScreen> {
         child: ElevatedButton(
           onPressed: () {
             if (subCategory.subCategoryService == 1) {
+              // Create initial ShiftData for service type 1
+              final shiftData = ShiftData(
+                serviceId: 0,
+                serviceName: subCategory.subCategoryName,
+                selectedDate: '',
+                selectedTime: '',
+                selectedProducts: [],
+                customerId: widget.customerId,
+                subCategoryId: subCategory.id,
+                categoryBannerImg: widget.categoryBannerImg,
+                categoryDesc: widget.categoryDesc,
+              );
+
+              // Navigate to LocationSelectionScreen first
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => ServiceSelectionScreen(
-                    subCategoryId: subCategory.id,
-                    subCategoryName: subCategory.subCategoryName,
-                    customerId: widget.customerId,
-                    categoryBannerImg: widget.categoryBannerImg,
-                    categoryDesc: widget.categoryDesc,
+                  builder: (context) => LocationSelectionScreen(
+                    shiftData: shiftData,
+                    navigateToInventory: true,
                   ),
                 ),
               );
@@ -408,7 +421,7 @@ class _ServiceFormScreenState extends State<ServiceFormScreen> {
       return 'https://54kidsstreet.org/admin_assets/category_banner_img/${widget.categoryBannerImg}';
     }
     debugPrint("_getBannerImageUrl: No banner image provided");
-    return null; // Return null instead of a default URL
+    return null;
   }
 
   @override
@@ -421,7 +434,6 @@ class _ServiceFormScreenState extends State<ServiceFormScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Check if banner and description exist
     bool hasBanner = widget.categoryBannerImg != null && widget.categoryBannerImg!.isNotEmpty;
     bool hasDescription = widget.categoryDesc != null && widget.categoryDesc!.isNotEmpty;
     bool showBannerSection = hasBanner || hasDescription;
@@ -448,14 +460,12 @@ class _ServiceFormScreenState extends State<ServiceFormScreen> {
         color: whiteColor,
         child: Column(
           children: [
-            // Conditional Banner and Description Section
             if (showBannerSection)
               Container(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Banner Image - Only if exists
                     if (hasBanner)
                       Container(
                         height: 150,
@@ -467,8 +477,8 @@ class _ServiceFormScreenState extends State<ServiceFormScreen> {
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(8),
                           child: FadeInImage.assetNetwork(
-                            placeholder: 'assets/parcelwala4.jpg', // Fallback for loading
-                            image: _getBannerImageUrl()!, // Non-null assertion since hasBanner ensures a valid URL
+                            placeholder: 'assets/parcelwala4.jpg',
+                            image: _getBannerImageUrl()!,
                             fit: BoxFit.cover,
                             imageErrorBuilder: (context, error, stackTrace) {
                               debugPrint("Image loading error: $error");
@@ -486,7 +496,6 @@ class _ServiceFormScreenState extends State<ServiceFormScreen> {
                         ),
                       ),
                     if (hasBanner && hasDescription) const SizedBox(height: 8),
-                    // Description - Only if exists
                     if (hasDescription)
                       Text(
                         widget.categoryDesc!,
@@ -501,7 +510,6 @@ class _ServiceFormScreenState extends State<ServiceFormScreen> {
                   ],
                 ),
               ),
-            // Form Section - Scrollable
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -509,7 +517,6 @@ class _ServiceFormScreenState extends State<ServiceFormScreen> {
                   key: _formKey,
                   child: ListView(
                     children: [
-                      // Display Service Name as a read-only text
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -648,7 +655,6 @@ class _ServiceFormScreenState extends State<ServiceFormScreen> {
                 ),
               ),
             ),
-            // Submit Button - Fixed at bottom
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: SizedBox(
