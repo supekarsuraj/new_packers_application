@@ -1,10 +1,11 @@
-// lib/views/home_service_view.dart (Updated for better flow, no changes needed based on issue, but ensuring consistency)
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../lib/views/MyRequestScreen.dart';
+import '../lib/views/login_view.dart';
 import '../models/UserData.dart';
 import 'SubCategoryScreen.dart';
 
@@ -15,8 +16,9 @@ const Color whiteColor = Color(0xFFf7f7f7);
 
 class HomeServiceView extends StatefulWidget {
   final UserData? userData;
+  final int? customerId;
 
-  const HomeServiceView({super.key, this.userData});
+  const HomeServiceView({super.key, this.userData, this.customerId});
 
   @override
   State<HomeServiceView> createState() => _HomeServiceViewState();
@@ -30,14 +32,18 @@ class _HomeServiceViewState extends State<HomeServiceView> {
   List<String> bannerImages = [];
   bool isLoadingCategories = true;
   bool isLoadingBanners = true;
+  Timer? _bannerTimer;
 
   @override
   void initState() {
     super.initState();
     _fetchCategories();
     _fetchBanners();
+  }
 
-    Timer.periodic(const Duration(seconds: 3), (Timer timer) {
+  void _startBannerTimer() {
+    _bannerTimer?.cancel();
+    _bannerTimer = Timer.periodic(const Duration(seconds: 3), (Timer timer) {
       if (mounted && bannerImages.isNotEmpty) {
         setState(() {
           currentIndex = (currentIndex + 1) % bannerImages.length;
@@ -78,10 +84,14 @@ class _HomeServiceViewState extends State<HomeServiceView> {
         final List<dynamic> banners = jsonData["data"];
 
         setState(() {
-          bannerImages = banners.map<String>((b) => "https://54kidsstreet.org/uploads/banner/${b["image"]}").toList();
+          bannerImages = banners
+              .map<String>((b) => "https://54kidsstreet.org/admin_assets/banners/${b["image"]}")
+              .toList();
 
           if (bannerImages.isEmpty) {
             _useFallbackBanners();
+          } else {
+            _startBannerTimer();
           }
           isLoadingBanners = false;
         });
@@ -102,11 +112,29 @@ class _HomeServiceViewState extends State<HomeServiceView> {
         'assets/parcelwala7.jpg',
       ];
       isLoadingBanners = false;
+      _startBannerTimer();
     });
+  }
+
+  bool _isNetworkImage(String imagePath) {
+    return imagePath.startsWith('http://') || imagePath.startsWith('https://');
+  }
+
+  Future<void> _logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('isLoggedIn');
+    await prefs.remove('customerId');
+    await prefs.remove('userData');
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => const LoginView()),
+          (route) => false,
+    );
   }
 
   @override
   void dispose() {
+    _bannerTimer?.cancel();
     _pageController.dispose();
     super.dispose();
   }
@@ -114,13 +142,15 @@ class _HomeServiceViewState extends State<HomeServiceView> {
   void _navigateToMyRequest() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const MyRequestScreen()),
+      MaterialPageRoute(
+        builder: (context) => MyRequestScreen(customerId: widget.customerId ?? 0),
+      ),
     );
   }
 
   void _openWhatsApp() async {
     final String phoneNumber = '919022062666';
-    final String message = 'Hello from from HomeServiceView';
+    final String message = 'Hello from HomeServiceView';
 
     final Uri whatsappAppUri = Uri.parse(
       'whatsapp://send?phone=$phoneNumber&text=${Uri.encodeComponent(message)}',
@@ -186,7 +216,12 @@ class _HomeServiceViewState extends State<HomeServiceView> {
 
   Widget _buildCategoryButton(Map<String, dynamic> category) {
     String name = category["name"] ?? "Unknown";
-    String? imageUrl = category["image_url"];
+    String? bannerImg = category["category_banner_img"];
+    String? description = category["category_desc"];
+
+    String? imageUrl = category["icon_image"] != null && category["icon_image"].isNotEmpty
+        ? "https://54kidsstreet.org/admin_assets/category_icon_img/${category["icon_image"]}"
+        : null;
     IconData defaultIcon = Icons.category;
 
     return ElevatedButton(
@@ -197,6 +232,9 @@ class _HomeServiceViewState extends State<HomeServiceView> {
             builder: (context) => SubCategoryScreen(
               categoryId: category["id"],
               categoryName: name,
+              customerId: widget.customerId,
+              categoryBannerImg: bannerImg,
+              categoryDesc: description,
             ),
           ),
         );
@@ -211,18 +249,28 @@ class _HomeServiceViewState extends State<HomeServiceView> {
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          imageUrl != null && imageUrl.isNotEmpty
-              ? FadeInImage.assetNetwork(
-            placeholder: 'assets/parcelwala4.jpg',
-            image: imageUrl,
-            height: 28,
-            width: 28,
-            fit: BoxFit.cover,
-            imageErrorBuilder: (c, e, s) =>
-                Icon(defaultIcon, color: mediumBlue, size: 28),
-          )
-              : Icon(defaultIcon, color: mediumBlue, size: 28),
+          Center(
+            child: imageUrl != null && imageUrl.isNotEmpty
+                ? SizedBox(
+              height: 28,
+              width: 28,
+              child: ClipRRect(
+                child: FadeInImage.assetNetwork(
+                  placeholder: 'assets/parcelwala4.jpg',
+                  image: imageUrl,
+                  fit: BoxFit.contain,
+                  alignment: Alignment.center,
+                  imageErrorBuilder: (context, error, stackTrace) {
+                    print('Failed to load image for $name: $imageUrl, Error: $error');
+                    return Icon(defaultIcon, color: mediumBlue, size: 28);
+                  },
+                ),
+              ),
+            )
+                : Icon(defaultIcon, color: mediumBlue, size: 28),
+          ),
           const SizedBox(height: 5),
           Text(
             name,
@@ -262,6 +310,13 @@ class _HomeServiceViewState extends State<HomeServiceView> {
             onPressed: () {},
           ),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout, color: whiteColor),
+            onPressed: _logout,
+            tooltip: 'Logout',
+          ),
+        ],
       ),
       body: Container(
         color: whiteColor,
@@ -273,7 +328,7 @@ class _HomeServiceViewState extends State<HomeServiceView> {
                 alignment: Alignment.centerLeft,
                 child: Text(
                   'Hi, ${widget.userData?.customerName ?? 'User'}',
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                     fontFamily: 'Poppins',
@@ -297,16 +352,17 @@ class _HomeServiceViewState extends State<HomeServiceView> {
                 },
                 itemBuilder: (context, index) {
                   final imagePath = bannerImages[index];
+                  final isNetwork = _isNetworkImage(imagePath);
+
                   return ClipRRect(
                     borderRadius: BorderRadius.circular(10),
-                    child: imagePath.endsWith(".webp")
+                    child: isNetwork
                         ? FadeInImage.assetNetwork(
                       placeholder: 'assets/parcelwala4.jpg',
                       image: imagePath,
                       fit: BoxFit.cover,
                       imageErrorBuilder: (c, e, s) =>
-                          Image.asset('assets/parcelwala4.jpg',
-                              fit: BoxFit.cover),
+                          Image.asset('assets/parcelwala4.jpg', fit: BoxFit.cover),
                     )
                         : Image.asset(imagePath, fit: BoxFit.cover),
                   );
@@ -325,8 +381,7 @@ class _HomeServiceViewState extends State<HomeServiceView> {
                 childAspectRatio: 2.0,
                 children: [
                   ...categories.map((cat) => _buildCategoryButton(cat)),
-                  _buildButton('My Request', Icons.check_circle,
-                      onTap: _navigateToMyRequest),
+                  _buildButton('My Request', Icons.check_circle, onTap: _navigateToMyRequest),
                   _buildButton('Call Us', Icons.call, onTap: _makePhoneCall),
                 ],
               ),
@@ -347,8 +402,7 @@ class _HomeServiceViewState extends State<HomeServiceView> {
                   children: const [
                     Icon(Icons.chat, color: Colors.white),
                     SizedBox(width: 10),
-                    Text('Chat with us',
-                        style: TextStyle(color: Colors.white)),
+                    Text('Chat with us', style: TextStyle(color: Colors.white)),
                   ],
                 ),
               ),

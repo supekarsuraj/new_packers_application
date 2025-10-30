@@ -14,6 +14,7 @@ class ProductSelectionScreen extends StatefulWidget {
   final String serviceName;
   final String selectedDate;
   final String selectedTime;
+  final int? customerId; // Added customerId parameter
   final List<SelectedProduct> initialSelectedProducts;
 
   const ProductSelectionScreen({
@@ -22,6 +23,7 @@ class ProductSelectionScreen extends StatefulWidget {
     required this.serviceName,
     required this.selectedDate,
     required this.selectedTime,
+    this.customerId, // Added customerId parameter
     this.initialSelectedProducts = const [],
   });
 
@@ -62,7 +64,6 @@ class _ProductSelectionScreenState extends State<ProductSelectionScreen> {
   void initState() {
     super.initState();
     _fetchProducts();
-    // Restore previously selected products
     selectedProducts.addAll(widget.initialSelectedProducts.map((p) =>
         SelectedProduct(productName: p.productName, count: p.count)));
   }

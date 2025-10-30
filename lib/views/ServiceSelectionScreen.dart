@@ -5,7 +5,8 @@ import 'dart:convert';
 import '../lib/views/location_selection_screen.dart';
 import '../models/ShiftData.dart';
 import 'ProductSelectionScreen.dart';
-import 'SelectedProduct.dart';
+import '../views/SelectedProduct.dart';
+import 'YourFinalScreen.dart';
 
 const Color darkBlue = Color(0xFF03669d);
 const Color mediumBlue = Color(0xFF37b3e7);
@@ -15,12 +16,20 @@ const Color whiteColor = Color(0xFFf7f7f7);
 class ServiceSelectionScreen extends StatefulWidget {
   final int subCategoryId;
   final String subCategoryName;
+  final int? customerId;
+  final String? categoryBannerImg;
+  final String? categoryDesc;
+  final ShiftData? shiftData;
 
   const ServiceSelectionScreen({
-    super.key,
+    Key? key,
     required this.subCategoryId,
     required this.subCategoryName,
-  });
+    this.customerId,
+    this.categoryBannerImg,
+    this.categoryDesc,
+    this.shiftData,
+  }) : super(key: key);
 
   @override
   State<ServiceSelectionScreen> createState() => _ServiceSelectionScreenState();
@@ -50,18 +59,6 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
   List<Service> services = [];
   bool isLoading = true;
   String? errorMessage;
-  String selectedDate = '';
-  String selectedTime = '';
-  final List<String> timeSlots = [
-    '09:00 AM',
-    '10:00 AM',
-    '11:00 AM',
-    '12:00 PM',
-    '01:00 PM',
-    '02:00 PM'
-  ];
-
-  // Map of serviceId -> selected products
   Map<int, List<SelectedProduct>> serviceSelectedProducts = {};
   Map<int, int> serviceProductCounts = {};
 
@@ -112,32 +109,6 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
     }
   }
 
-  Future<void> _selectDate() async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: mediumBlue,
-              onPrimary: whiteColor,
-              onSurface: Colors.black,
-            ),
-          ),
-          child: child!,
-        );
-      },
-    );
-    if (picked != null) {
-      setState(() {
-        selectedDate = '${picked.day}/${picked.month}/${picked.year}';
-      });
-    }
-  }
-
   void _updateServiceCount(int serviceId, List<SelectedProduct> products) {
     serviceSelectedProducts[serviceId] = products;
     setState(() {
@@ -148,10 +119,14 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
 
   @override
   Widget build(BuildContext context) {
+    bool hasBanner = widget.categoryBannerImg != null && widget.categoryBannerImg!.isNotEmpty;
+    bool hasDescription = widget.categoryDesc != null && widget.categoryDesc!.isNotEmpty;
+    bool showBannerSection = hasBanner || hasDescription;
+
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          '${widget.subCategoryName} Services',
+          '${widget.subCategoryName} Inventory',
           style: const TextStyle(
             fontFamily: 'Poppins',
             fontWeight: FontWeight.bold,
@@ -166,91 +141,82 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'When to shift?',
-              style: TextStyle(
-                fontSize: 18,
-                color: Colors.grey,
-                fontFamily: 'Poppins',
-              ),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: _selectDate,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: mediumBlue,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
+      body: Column(
+        children: [
+          if (showBannerSection)
+            Container(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (hasBanner)
+                    Container(
+                      height: 150,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(8),
+                        color: lightBlue,
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: FadeInImage.assetNetwork(
+                          placeholder: 'assets/parcelwala4.jpg',
+                          image: 'https://54kidsstreet.org/admin_assets/category_banner_img/${widget.categoryBannerImg}',
+                          fit: BoxFit.cover,
+                          imageErrorBuilder: (context, error, stackTrace) {
+                            return Image.asset(
+                              'assets/parcelwala4.jpg',
+                              fit: BoxFit.cover,
+                            );
+                          },
+                        ),
                       ),
                     ),
-                    child: Text(
-                      selectedDate.isEmpty ? 'Select date' : selectedDate,
-                      style: const TextStyle(color: whiteColor),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: DropdownButtonFormField<String>(
-                    isExpanded: true,
-                    decoration: InputDecoration(
-                      hintText: 'Select time',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: Colors.grey),
+                  if (hasBanner && hasDescription) const SizedBox(height: 8),
+                  if (hasDescription)
+                    Text(
+                      widget.categoryDesc!,
+                      style: const TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 12,
+                        color: Colors.grey,
                       ),
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 10),
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    value: selectedTime.isEmpty ? null : selectedTime,
-                    items: timeSlots.map((String time) {
-                      return DropdownMenuItem<String>(
-                        value: time,
-                        child: Text(time, overflow: TextOverflow.ellipsis),
-                      );
-                    }).toList(),
-                    onChanged: (String? newValue) {
-                      if (newValue != null) {
-                        setState(() {
-                          selectedTime = newValue;
-                        });
-                      }
-                    },
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Select Services',
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: Colors.grey,
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            const Text(
-              'Select Services',
-              style: TextStyle(
-                fontSize: 18,
-                color: Colors.grey,
-                fontFamily: 'Poppins',
+                ],
               ),
             ),
-            const SizedBox(height: 16),
-            Expanded(
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: isLoading
-                  ? const Center(child: CircularProgressIndicator(color: darkBlue))
+                  ? const Center(
+                  child: CircularProgressIndicator(color: darkBlue))
                   : errorMessage != null
-                  ? Center(child: Text(errorMessage!, style: const TextStyle(color: darkBlue)))
+                  ? Center(
+                  child: Text(errorMessage!,
+                      style: const TextStyle(color: darkBlue)))
                   : services.isEmpty
-                  ? const Center(child: Text('No services available', style: TextStyle(color: darkBlue)))
+                  ? const Center(
+                  child: Text('No services available',
+                      style: TextStyle(color: darkBlue)))
                   : ListView.builder(
                 itemCount: services.length,
                 itemBuilder: (context, index) {
                   final service = services[index];
-                  final count = serviceProductCounts[service.id] ?? 0;
+                  final count =
+                      serviceProductCounts[service.id] ?? 0;
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 12.0),
                     child: Stack(
@@ -259,35 +225,36 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
                           width: double.infinity,
                           child: ElevatedButton(
                             onPressed: () async {
-                              if (selectedDate.isEmpty || selectedTime.isEmpty) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Please select date and time first'),
-                                  ),
-                                );
-                                return;
-                              }
                               final result = await Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => ProductSelectionScreen(
-                                    serviceId: service.id,
-                                    serviceName: service.serviceName,
-                                    selectedDate: selectedDate,
-                                    selectedTime: selectedTime,
-                                    initialSelectedProducts: serviceSelectedProducts[service.id] ?? [],
-                                  ),
+                                  builder: (context) =>
+                                      ProductSelectionScreen(
+                                        serviceId: service.id,
+                                        serviceName:
+                                        service.serviceName,
+                                        selectedDate: widget.shiftData?.selectedDate ?? '',
+                                        selectedTime: widget.shiftData?.selectedTime ?? '',
+                                        initialSelectedProducts:
+                                        serviceSelectedProducts[
+                                        service.id] ??
+                                            [],
+                                        customerId: widget.customerId,
+                                      ),
                                 ),
                               );
                               if (result is List<SelectedProduct>) {
-                                _updateServiceCount(service.id, result);
+                                _updateServiceCount(
+                                    service.id, result);
                               }
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: mediumBlue,
-                              minimumSize: const Size(double.infinity, 55),
+                              minimumSize:
+                              const Size(double.infinity, 50),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius:
+                                BorderRadius.circular(12),
                               ),
                             ),
                             child: Text(
@@ -305,7 +272,7 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
                             right: 12,
                             top: 10,
                             child: Container(
-                              padding: const EdgeInsets.all(5),
+                              padding: const EdgeInsets.all(6),
                               decoration: const BoxDecoration(
                                 color: Colors.red,
                                 shape: BoxShape.circle,
@@ -326,33 +293,59 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
                 },
               ),
             ),
-            const SizedBox(height: 16),
-            SizedBox(
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () {
-                  if (serviceProductCounts.values.every((count) => count == 0)) {
+                  if (serviceProductCounts.values
+                      .every((count) => count == 0)) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text('Please select products for at least one service'),
+                        content: Text(
+                            'Please select products for at least one service'),
                         backgroundColor: Colors.red,
                       ),
                     );
                     return;
                   }
-                  final shiftData = ShiftData(
-                    serviceId: 0,
-                    serviceName: 'Multiple Services',
-                    selectedDate: selectedDate,
-                    selectedTime: selectedTime,
-                    selectedProducts: serviceSelectedProducts.values.expand((list) => list).toList(),
-                  );
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => LocationSelectionScreen(shiftData: shiftData),
-                    ),
-                  );
+
+                  // Update shiftData with selected products
+                  if (widget.shiftData != null) {
+                    widget.shiftData!.selectedProducts = serviceSelectedProducts.values
+                        .expand((list) => list)
+                        .toList();
+
+                    // Navigate directly to confirmation screen (YourFinalScreen)
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            YourFinalScreen(shiftData: widget.shiftData!),
+                      ),
+                    );
+                  } else {
+                    // Fallback to old behavior if no shiftData
+                    final shiftData = ShiftData(
+                      serviceId: 0,
+                      serviceName: 'Multiple Services',
+                      selectedDate: '',
+                      selectedTime: '',
+                      selectedProducts: serviceSelectedProducts.values
+                          .expand((list) => list)
+                          .toList(),
+                      customerId: widget.customerId,
+                    );
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            LocationSelectionScreen(shiftData: shiftData),
+                      ),
+                    );
+                  }
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: darkBlue,
@@ -371,8 +364,8 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

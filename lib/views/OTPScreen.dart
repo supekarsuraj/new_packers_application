@@ -4,12 +4,15 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:async';
 import 'dart:developer' as developer;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sms_autofill/sms_autofill.dart';
 import '../lib/views/signup_view.dart';
 import 'HomeServiceView.dart';
+import '../models/OtpResponse.dart';
 
 class OTPScreen extends StatefulWidget {
   final String mobileNumber;
-  final int source; // Added source parameter
+  final int source;
 
   const OTPScreen({super.key, required this.mobileNumber, required this.source});
 
@@ -17,7 +20,7 @@ class OTPScreen extends StatefulWidget {
   State<OTPScreen> createState() => _OTPScreenState();
 }
 
-class _OTPScreenState extends State<OTPScreen> {
+class _OTPScreenState extends State<OTPScreen> with CodeAutoFill {
   static const Color darkBlue = Color(0xFF03669d);
   static const Color mediumBlue = Color(0xFF37b3e7);
   static const Color lightBlue = Color(0xFF7ed2f7);
@@ -28,13 +31,51 @@ class _OTPScreenState extends State<OTPScreen> {
 
   bool isLoading = false;
   bool isResendLoading = false;
-  int resendTimer = 30; // 30 seconds
+  int resendTimer = 30;
   Timer? timer;
+  String? appSignature;
 
   @override
   void initState() {
     super.initState();
     startResendTimer();
+    _initSmsListener();
+  }
+
+  // Initialize SMS listener
+  Future<void> _initSmsListener() async {
+    try {
+      // Get app signature (needed for SMS retriever API)
+      appSignature = await SmsAutoFill().getAppSignature;
+      developer.log('[OTPScreen] App Signature: $appSignature', name: 'flutter');
+
+      // Listen for OTP
+      await SmsAutoFill().listenForCode();
+
+      developer.log('[OTPScreen] SMS Listener initialized', name: 'flutter');
+    } catch (e) {
+      developer.log('[OTPScreen] Error initializing SMS listener: $e', name: 'flutter');
+    }
+  }
+
+  @override
+  void codeUpdated() {
+    // This method is called when OTP is detected
+    if (code != null && code!.length == 6) {
+      developer.log('[OTPScreen] OTP Auto-filled: $code', name: 'flutter');
+
+      // Fill OTP fields
+      for (int i = 0; i < 6; i++) {
+        otpControllers[i].text = code![i];
+      }
+
+      // Auto-submit after a short delay
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (mounted) {
+          submitOTP();
+        }
+      });
+    }
   }
 
   void startResendTimer() {
@@ -51,6 +92,8 @@ class _OTPScreenState extends State<OTPScreen> {
 
   @override
   void dispose() {
+    // Cancel SMS listener
+    SmsAutoFill().unregisterListener();
     timer?.cancel();
     for (var controller in otpControllers) {
       controller.dispose();
@@ -66,7 +109,7 @@ class _OTPScreenState extends State<OTPScreen> {
     return otp;
   }
 
-  Future<bool> verifyOTP(String otp) async {
+  Future<OtpResponse?> verifyOTP(String otp) async {
     try {
       String baseUrl = 'http://54kidsstreet.org';
       final url = '$baseUrl/api/customers/${widget.mobileNumber}/otpverify?otp=$otp';
@@ -86,27 +129,27 @@ class _OTPScreenState extends State<OTPScreen> {
             developer.log('[OTPScreen] ✅ Parsed Response: $responseData',
                 name: 'flutter', level: 800);
 
-            if (responseData is Map &&
-                (responseData.containsKey('status') && responseData['status'] == true ||
-                    responseData.containsKey('success') && responseData['success'] == true ||
-                    responseData.containsKey('message') && responseData['message'].toString().toLowerCase().contains('success') ||
-                    responseData.containsKey('verified') && responseData['verified'] == true ||
-                    responseData.containsKey('result') && responseData['result'].toString().toLowerCase() == 'verified')) {
-              return true;
+            OtpResponse otpResponse = OtpResponse.fromJson(responseData);
+
+            if (otpResponse.status) {
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.setBool('isLoggedIn', true);
+              await prefs.setString('customerId', otpResponse.customerId.toString());
+              return otpResponse;
             } else {
-              return false;
+              return null;
             }
           } catch (e) {
-            return true;
+            return OtpResponse(status: true, msg: 'OTP verified successfully', customerId: 0);
           }
         } else {
-          return true;
+          return OtpResponse(status: true, msg: 'OTP verified successfully', customerId: 0);
         }
       } else {
-        return false;
+        return null;
       }
     } catch (e) {
-      return false;
+      return null;
     }
   }
 
@@ -124,6 +167,8 @@ class _OTPScreenState extends State<OTPScreen> {
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
+        // Re-initialize SMS listener after resend
+        await _initSmsListener();
         return true;
       } else {
         return false;
@@ -157,26 +202,29 @@ class _OTPScreenState extends State<OTPScreen> {
       isLoading = true;
     });
 
-    bool isVerified = await verifyOTP(otp);
+    OtpResponse? otpResponse = await verifyOTP(otp);
 
     setState(() {
       isLoading = false;
     });
 
-    if (isVerified) {
-      // Navigate based on source value
+    if (otpResponse != null && otpResponse.status) {
       if (widget.source == 1) {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => HomeServiceView(),
+            builder: (context) => HomeServiceView(
+              customerId: otpResponse.customerId,
+            ),
           ),
         );
       } else if (widget.source == 2) {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => SignupView(mobileNumber: widget.mobileNumber),
+            builder: (context) => SignupView(
+              mobileNumber: widget.mobileNumber,
+            ),
           ),
         );
       }
@@ -276,6 +324,15 @@ class _OTPScreenState extends State<OTPScreen> {
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
                   color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                'Auto-fill enabled',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey,
+                  fontWeight: FontWeight.w400,
                 ),
               ),
               const SizedBox(height: 30),

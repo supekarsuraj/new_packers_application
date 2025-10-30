@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
@@ -62,7 +61,6 @@ class _OtpVerificationViewState extends State<OtpVerificationView> {
           MaterialPageRoute(builder: (context) => const HomeServiceView()),
         );
       } else {
-        // ❌ OTP Failed
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Invalid OTP. Please try again.")),
         );

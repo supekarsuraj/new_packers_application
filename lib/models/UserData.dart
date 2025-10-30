@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 class UserData {
   final String customerName;
   final String email;
@@ -15,25 +17,25 @@ class UserData {
     required this.mobileNo,
   });
 
-  Map<String, String> toMap() {
+  factory UserData.fromJson(Map<String, dynamic> json) {
+    return UserData(
+      customerName: json['customerName'] ?? '',
+      email: json['email'] ?? '',
+      pincode: json['pincode'] ?? '',
+      city: json['city'] ?? '',
+      state: json['state'] ?? '',
+      mobileNo: json['mobileNo'] ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
     return {
-      'customer_name': customerName,
+      'customerName': customerName,
       'email': email,
       'pincode': pincode,
       'city': city,
       'state': state,
-      'mobile_no': mobileNo,
+      'mobileNo': mobileNo,
     };
-  }
-
-  factory UserData.fromMap(Map<String, dynamic> map) {
-    return UserData(
-      customerName: map['customer_name'] ?? '',
-      email: map['email'] ?? '',
-      pincode: map['pincode'] ?? '',
-      city: map['city'] ?? '',
-      state: map['state'] ?? '',
-      mobileNo: map['mobile_no'] ?? '',
-    );
   }
 }

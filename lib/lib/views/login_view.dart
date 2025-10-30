@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
-import 'dart:convert';
 
 import '../../views/OTPScreen.dart';
 import '../../views/signupOtpView.dart';
